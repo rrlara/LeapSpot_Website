@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My 2013 Travels</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet"
+    href="http://cdn.leafletjs.com/leaflet-0.6.2/leaflet.css" />
+  <!--[if lte IE 8]>
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.4/leaflet.ie.css" />
+  <![endif]-->
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="MarkerCluster.css" />
+  <link rel="stylesheet" href="MarkerCluster.Default.css" />
+  <!--[if lte IE 8]><link rel="stylesheet" href="markercluster/MarkerCluster.Default.ie.css" /><![endif]-->
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js">
+  
+  </script>
+  <script src="Map.js" type="text/javascript"></script>
+  <script>
+  
+  /*
+  // check for Geolocation support
+		if (navigator.geolocation) {
+		  //console.log('Geolocation is supported!');
+		}
+		else {
+		 // console.log('Geolocation is not supported for this Browser/OS version yet.');
+		}
+	*/	
+	
+	
+	
+  $(document).ready(function(){
+  	
+  	var viewportWidth = $(window).width();
+	var viewportHeight = $(window).height();
+	
+	$("#infoback").width(viewportWidth);
+  	
+  	
+  	IS_IPAD = navigator.userAgent.match(/iPad/i) != null;
+		IS_IPHONE = (navigator.userAgent.match(/iPhone/i) != null) || (navigator.userAgent.match(/iPod/i) != null);
+		if (IS_IPAD) {
+		IS_IPHONE = false;
+		$("#infoback").width(viewportWidth);
+		}else{
+			console.log("Not iPad");
+			$("#infoback").width(320);
+		}
+  	
+  	
+  	
+    $("#sidebar-off").click(function(){
+    $("#infoback").hide('slow');
+    });
+    $("#sidebar-on").click(function(){
+    $("#infoback").show('slow');
+    });
+    
+    //navigator.geolocation.getCurrentPosition(locateMe);
+    
+    loadLeafMaps();
+  });
+  </script>
+</head>
+<body>
+  <div id="map"></div>
+  <div id='collapse'>
+    <div class="switch switch-yellow">
+      <input type="radio" class="switch-input" name="view3" value="sidebar-on" id="sidebar-on" checked>
+      <label for="sidebar-on" class="switch-label switch-label-off">Show</label>
+
+      <input type="radio" class="switch-input" name="view3" value="sidebar-off" id="sidebar-off">
+      <label for="sidebar-off" class="switch-label switch-label-on">Hide</label>
+      <span class="switch-selection"></span>
+    </div>
+  </div>
+  <div id='infoback'>
+    <div id='info'>
+    <h1>Traveling</h1>
+    <p>
+      These points represent locations where we have geotagged with a comment and photo. This is our progression of Travels in late 2013.
+    </p>
+    <p>
+      Please follow me and view our where abouts while "Walking the World". 
+    </p>
+    <p class="disclaimer">
+      
+    </p></div>
+  </div>
+  <div id="map-panel">
+		<div id="aerial" class="mapicons">Aerial</div>
+		<div id="darkCanvas" class="mapicons">Dark</div>
+		<div id="streets" class="mapicons activeicon">Streets</div>
+		<div id="terrain" class="mapicons">Terrain</div>
+		<div class="closer"></div>
+ </div>
+  <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+  <script src="http://cdn.leafletjs.com/leaflet-0.6.2/leaflet.js"></script>
+  <script src="leaflet.markercluster.js"></script>
+  <script>
+
+
+
+  </script>
+</body>
+</html>
