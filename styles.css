@@ -1,6 +1,5 @@
 html {
   margin: 0;
-  background: #333;
 }
 
 body {
@@ -36,10 +35,10 @@ div#info h2 {
 }
 
 #map {   
-  position:absolute; 
-  top:0; 
-  bottom:0; 
-  width:100%;
+  position: absolute;
+top: 0;
+bottom: 0;
+width: 100%;
 }
 
 .leaflet-popup-content {
@@ -197,4 +196,57 @@ div#info h2 {
 
 .mapicons.activeicon{
 	outline: 2px solid rgb(236,119,33);
+}
+
+#locationPanelWrapper{
+	padding-left: 5px;
+	padding-top: 5px;
+	padding-bottom: 10px;
+	left:0px;
+	height: 100%;
+	width: 275px;
+	z-index: 10;
+	box-shadow: 0 0 15px rgba(0,0,0,0.25);
+	position:absolute;
+	background: rgba(0, 0, 0, 0.25);
+	overflow:auto;
+}
+
+.panel{
+	
+	background-color: rgb(245, 245, 245);
+	height: 75px;
+	width:270px;
+	margin-top: 2px;
+	border-top-left-radius: 5px;
+border-top-right-radius: 5px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 5px;
+
+opacity: 0.8;
+filter: alpha(opacity=60);
+	
+}
+
+.panel.activepanel {
+	background-color: red;
+}
+
+.imageThumbnail{
+	font-size:10px;
+	top:5px;
+	transform:rotate(90deg);
+	-ms-transform:rotate(90deg); /* IE 9 */
+	-webkit-transform:rotate(90deg); /* Safari and Chrome */
+	outline: #023902 solid thin;
+	
+	margin-top:5px;
+
+	
+}
+
+
+.comments{
+color: #787878;
+font-size: 12px;
 }

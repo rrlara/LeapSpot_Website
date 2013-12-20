@@ -34,6 +34,8 @@
 	
   $(document).ready(function(){
   	
+  	init();
+  	
   	var viewportWidth = $(window).width();
 	var viewportHeight = $(window).height();
 	
@@ -60,9 +62,11 @@
     });
     
     //navigator.geolocation.getCurrentPosition(locateMe);
-    
-    loadLeafMaps();
-  });
+
+		loadLeafMaps();
+		
+
+		});
   </script>
 </head>
 <body>
@@ -70,10 +74,10 @@
   <div id='collapse'>
     <div class="switch switch-yellow">
       <input type="radio" class="switch-input" name="view3" value="sidebar-on" id="sidebar-on" checked>
-      <label for="sidebar-on" class="switch-label switch-label-off">Show</label>
+      <label id="sidebarOn" for="sidebar-on" class="switch-label switch-label-off">Show</label>
 
       <input type="radio" class="switch-input" name="view3" value="sidebar-off" id="sidebar-off">
-      <label for="sidebar-off" class="switch-label switch-label-on">Hide</label>
+      <label id="sidebarOff" for="sidebar-off" class="switch-label switch-label-on">Hide</label>
       <span class="switch-selection"></span>
     </div>
   </div>
@@ -81,15 +85,16 @@
     <div id='info'>
     <h1>Traveling</h1>
     <p>
-      These points represent locations where we have geotagged with a comment and photo. This is our progression of Travels in late 2013.
+      These points represent locations where we have geotagged with a comment and photo. This is our progression of Travels in late 2013 and early 2014. ENJOY!!!
     </p>
     <p>
-      Please follow me and view our where abouts while "Walking the World". 
+      Please follow us and view our whereabouts while "Walking the World". 
     </p>
     <p class="disclaimer">
       
     </p></div>
   </div>
+  
   <div id="map-panel">
 		<div id="aerial" class="mapicons">Aerial</div>
 		<div id="darkCanvas" class="mapicons">Dark</div>
