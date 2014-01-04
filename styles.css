@@ -139,6 +139,7 @@ width: 100%;
   transition: left 0.15s ease-out;
 }
 
+
 #map-panel{
 	
 	right: 329px;
@@ -250,3 +251,50 @@ filter: alpha(opacity=60);
 color: #787878;
 font-size: 12px;
 }
+
+
+#map-top-panel{
+	position: absolute;
+	top: 20px;
+    font-style: italic;
+    z-index: 10;
+    margin-top: 40px;
+
+}
+
+
+.Tab1 {
+	width:120px;
+	height:30px;
+	float: left;
+	background-color: #383838;
+	position:relative;
+	cursor: pointer;
+	opacity: 0.8;
+	font-family: 'Gotham-BookItalic';
+	opacity:0.8;
+  	filter:alpha(opacity=60); /* For IE8 and earlier */
+}
+
+.Tab1.active1 {
+	
+	background-color:#d24a46;
+	opacity: 1;
+}
+
+.Tab1Text {
+	
+	color: #a09f9f;
+	font-family: 'Gotham-BookItalic';
+	text-align: center;
+	line-height: 26px;
+}
+
+.active1 .Tab1Text {
+	
+	color: #FFFFFF;
+}
+
+
+
+

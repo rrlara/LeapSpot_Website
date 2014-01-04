@@ -4,16 +4,100 @@ var geolon = null;
 
 var geoPoints = null;
 
+var geoPointsSEA = null;
+
 var _surveyPointLayer = null;
-var _surveyPointLayerCircles = null;
+var _MexicosurveyPointLayerCircles = null;
+
+var _SEAsurveyPointLayerCircles
+
+var SEAmarkers = null;
+
+var Mexicomarkers = null;
 
 
 function init(){
 	
 	//$("#sidebarOff").click(slideLocationPanelWrapperOut);
 	
+	$('#individualPlot').click(clickDetailPanelTab2);
+	
+	$('#districtLevel').click(clickDetailPanelTab2);
+	
 	
 }
+
+function clickDetailPanelTab2() {
+	$(this).addClass('active1').siblings().removeClass('active1');
+	
+	viewIndividualPlotsStats();
+
+}
+
+function viewIndividualPlotsStats() {
+	
+	
+
+    if ($('#individualPlot').hasClass('active1')) {
+    
+
+        removeMexicoPoints();
+
+        //getSEAPoints();
+        
+        if (!geoPointsSEA) {
+        	getSEAPoints();
+        	console.log("getting SEA Observations");
+	    } else {
+	        addSEAPoints();
+	        console.log("getting SEA Layer");
+	        _SPDEV.Map.map.fitBounds(SEAmarkers);
+	    }
+
+
+
+
+
+    } else {
+        
+        //getMexicoPoints();
+        
+        removeThailandPoints();
+        
+        if (!geoPoints) {
+        getMexicoPoints();
+        console.log("getting Mexico Observations");
+	    } else {
+	        addMexicoPoints();
+	        console.log("getting Mexico Layer");
+	        _SPDEV.Map.map.fitBounds(Mexicomarkers);
+	    }
+
+  
+    }
+}
+
+function addMexicoPoints(){
+	
+	_SPDEV.Map.map.addLayer(Mexicomarkers);
+	//addOutlineDistrictsBoundaries();
+}
+
+function removeMexicoPoints(){
+	_SPDEV.Map.map.removeLayer(Mexicomarkers);
+}
+
+function addSEAPoints(){
+	
+	_SPDEV.Map.map.addLayer(SEAmarkers);
+	//addOutlineDistrictsBoundaries();
+}
+
+function removeThailandPoints(){
+	_SPDEV.Map.map.removeLayer(SEAmarkers);
+}
+
+
 
 function slideLocationPanelWrapperOut(){
 	
@@ -35,8 +119,9 @@ function locateMe (position) {
 }
 */
 
+
 //Load points GeoJSON and add to map
-function getCRSPoints(){
+function getSEAPoints(){
 	
 	 var postArgs = {
                
@@ -49,13 +134,13 @@ function getCRSPoints(){
             //Send POST, using JSONP
             $.getJSON(url, postArgs).done(function (data) {
            
-                geoPoints = data;
+                geoPointsSEA = data;
                 
-                console.log(geoPoints);
+                console.log(geoPointsSEA);
                 
                 //_surveyPointLayer = L.geoJson(data.features).addTo(_SPDEV.Map.map);
                 
-                 onPointResults(geoPoints);
+                 //onPointResults(geoPointsSEA);
                  
                  //var image = "https://s3-us-west-2.amazonaws.com/travels2013/" + feature.properties.timestamp;
                  
@@ -118,7 +203,7 @@ function getCRSPoints(){
 				    fillOpacity: 0.8
 				};
 				
-				_surveyPointLayerCircles = L.geoJson(data.features, {
+				_SEAsurveyPointLayerCircles = L.geoJson(data.features, {
 				    pointToLayer: function (feature, latlng) {
 				        return L.marker(latlng);
 				    },
@@ -127,12 +212,127 @@ function getCRSPoints(){
 				
 				});
 				
-				var markers = L.markerClusterGroup({showCoverageOnHover: false,maxClusterRadius: 40});
-				    markers.addLayer(_surveyPointLayerCircles);
-    				_SPDEV.Map.map.addLayer(markers);
+				SEAmarkers = L.markerClusterGroup({showCoverageOnHover: false,maxClusterRadius: 40});
+				    SEAmarkers.addLayer(_SEAsurveyPointLayerCircles);
+    				_SPDEV.Map.map.addLayer(SEAmarkers);
     				
     				
-    			_SPDEV.Map.map.fitBounds(markers);
+    			_SPDEV.Map.map.fitBounds(SEAmarkers);
+    			
+    			
+    			
+				
+				
+                
+                
+                
+            }).fail(function (jqxhr, textStatus, error) {
+                var err = textStatus + ', ' + error;
+                console.log("Request Failed: " + err);
+            });
+            
+           
+			    
+}
+
+//Load points GeoJSON and add to map
+function getMexicoPoints(){
+	
+	 var postArgs = {
+               
+               
+            };
+            
+            
+            var url = 'https://s3-us-west-2.amazonaws.com/travels2013/Observations_Mexico.json';
+
+            //Send POST, using JSONP
+            $.getJSON(url, postArgs).done(function (data) {
+           
+                geoPoints = data;
+                
+                console.log(geoPoints);
+                
+                //_surveyPointLayer = L.geoJson(data.features).addTo(_SPDEV.Map.map);
+                
+                 //onPointResults(geoPoints);
+                 
+                 //var image = "https://s3-us-west-2.amazonaws.com/travels2013/" + feature.properties.timestamp;
+                 
+                 function onEachFeature(feature, layer) {
+                 	 var image = '<A HREF="https://s3-us-west-2.amazonaws.com/travels2013/' + feature.properties.timestamp + '.jpg" TARGET="NEW"><img width="100" height="100" class="imageThumbnail" src="https://s3-us-west-2.amazonaws.com/travels2013/' + feature.properties.timestamp + '.jpg" /></A>';
+
+                 	//var image = '<img src="https://s3-us-west-2.amazonaws.com/travels2013/' + feature.properties.timestamp + '.jpg" height="100" width="100">';
+				    layer.bindPopup('<h2>' + feature.properties.comment + '</eh2>' + '<br />' + 
+				      '<span class="comments">Time Stamp: ' + feature.properties.timestamp + '</span><br />' + 
+				      '<span class="comments">lat/lng: ' + feature.geometry.coordinates[1] + "," + feature.geometry.coordinates[0] + '</span><br />' + 
+				      image || ""
+				      );
+				     
+				      
+				    /*  
+				    _surveyPointLayerCircles.on("mouseover", function(e) {
+			
+					$("#cropText").html(feature.properties.crop);
+				      
+					console.log(feature.properties.crop);
+					});
+					*/
+					
+					layer.on("mouseover", function(e) {
+						
+						panelDiv = feature.properties.timestamp;
+						
+						$("#" + panelDiv).addClass("activepanel");
+						
+						console.log(panelDiv);
+						//$("#" + markerid).animate({scrollTop:$("#" + markerid).position().top}, 'slow');
+				
+						
+						
+						//$("#" + markerid).css("color","#009fe4");
+						
+					});
+					
+					layer.on("mouseout", function(e) {
+			            $("#" + panelDiv).removeClass("activepanel");
+			            
+			            console.log(panelDiv);
+	            
+	        		});
+				      
+				      
+				  }
+				  
+				 var treeIcon = L.icon({
+				      iconUrl: 'images/tree_small.png'
+				    });
+
+                
+                var geojsonMarkerOptions = {
+				    radius: 4,
+				    fillColor: "#028bb0",
+				    color: "#000",
+				    weight: 1,
+				    opacity: 1,
+				    fillOpacity: 0.8
+				};
+				
+				_MexicosurveyPointLayerCircles = L.geoJson(data.features, {
+				    pointToLayer: function (feature, latlng) {
+				        return L.marker(latlng);
+				    },
+				    
+				    onEachFeature: onEachFeature
+				
+				});
+				
+				Mexicomarkers = L.markerClusterGroup({showCoverageOnHover: false,maxClusterRadius: 40});
+				    Mexicomarkers.addLayer(_MexicosurveyPointLayerCircles);
+    				_SPDEV.Map.map.addLayer(Mexicomarkers);
+    				
+    				
+    			_SPDEV.Map.map.fitBounds(Mexicomarkers);
     			
     			
     			
@@ -153,7 +353,7 @@ function getCRSPoints(){
 
 
 
-
+/*
 function onPointResults(data)  {
 	
 	var pointdata = geoPoints.features;
@@ -184,6 +384,7 @@ function onPointResults(data)  {
 		
 	}
 }
+*/
 
 
 
@@ -228,8 +429,11 @@ function loadLeafMaps(){
 	_SPDEV.Map.addBasemap('darkCanvas', 'http://{s}.tiles.mapbox.com/v3/spatialdev.map-c9z2cyef/{z}/{x}/{y}.png', {});
 	_SPDEV.Map.addBasemap('aerial', 'http://{s}.tiles.mapbox.com/v3/spatialdev.map-hozgh18d/{z}/{x}/{y}.png', {});
 	
-	getCRSPoints();
+	getMexicoPoints();
+	//getSEAPoints();
 }
+
+
 
 
 _SPDEV.LeafletMap = function(mapId, options) {	
