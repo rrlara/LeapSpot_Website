@@ -9,11 +9,20 @@ var geoPointsSEA = null;
 var _surveyPointLayer = null;
 var _MexicosurveyPointLayerCircles = null;
 
-var _SEAsurveyPointLayerCircles
+var _SEAsurveyPointLayerCircles;
 
 var SEAmarkers = null;
 
 var Mexicomarkers = null;
+
+var stringlineArray = [];
+
+var _keycount = 0;
+
+var _geoJSONLine = null;
+
+var _RouteGeoJSON;
+
 
 
 function init(){
@@ -90,11 +99,13 @@ function removeMexicoPoints(){
 function addSEAPoints(){
 	
 	_SPDEV.Map.map.addLayer(SEAmarkers);
+	_SPDEV.Map.map.addLayer(_RouteGeoJSON);
 	//addOutlineDistrictsBoundaries();
 }
 
 function removeThailandPoints(){
 	_SPDEV.Map.map.removeLayer(SEAmarkers);
+	_SPDEV.Map.map.removeLayer(_RouteGeoJSON);
 }
 
 
@@ -119,6 +130,88 @@ function locateMe (position) {
 }
 */
 
+function onPointResults(data)  {
+	
+	
+	//var topGeoJson = '{ "type": "FeatureCollection","features": [{ "type": "Feature","geometry": {"type": "LineString","coordinates":[';
+	
+	var topGeoJson = ['{"type": "LineString","coordinates": ['];
+	
+	stringlineArray.push(topGeoJson);
+	
+	var pointdata = data.features;
+	pointdata = pointdata.reverse();
+	var numberOfPoints = data.features.length;
+	console.log(numberOfPoints);
+
+	if(numberOfPoints === 0) {
+		return;
+	}
+	
+	for(var i=0; i < numberOfPoints; i++) {
+		var pointData = pointdata[i];
+		//console.log(pointData);
+		var lat = pointData.geometry.coordinates[1];
+		var lng = pointData.geometry.coordinates[0];
+		//console.log("lat: ",lat);
+		//console.log("lng: ", lng);
+		
+		if (lat && lng){
+			
+			var pointItem = "[" + lng + ", " + lat + "],";
+		
+			//console.log(pointItem);
+			
+			stringlineArray.push(pointItem);
+			
+		}
+		
+		
+		
+		
+		
+	}
+	
+	//SEAPointArray.shift();
+	
+	//var bottomGeoJson = [']}'];
+	
+	stringlineArray.push(']}');
+	
+	//var GeoJSONLineString = topGeoJson.concat(SEAPointArray, bottomGeoJson);
+	
+	//console.log(GeoJSONLineString);
+	
+	var myVar = stringlineArray.join("");
+	
+	myVar = myVar.replace(/,(?=[^,]*$)/, '');
+	
+	
+	console.log(myVar);
+	
+	_geoJSONLine = jQuery.parseJSON(myVar);
+	
+	
+	
+	console.log(_geoJSONLine);
+	
+	
+	var myStyle = {
+		"color" : "#787878",
+		"weight" : 3,
+		"opacity" : 0.65,
+		"dashArray": 15
+	}; 
+
+	
+	_RouteGeoJSON = new L.GeoJSON(_geoJSONLine, {
+		    style: myStyle
+		});
+       _SPDEV.Map.map.addLayer(_RouteGeoJSON);
+	
+	
+}
+
 
 //Load points GeoJSON and add to map
 function getSEAPoints(){
@@ -129,31 +222,39 @@ function getSEAPoints(){
             };
             
             
-            var url = 'https://s3-us-west-2.amazonaws.com/travels2013/Observations.json';
+            var url = 'https://s3-us-west-2.amazonaws.com/travels2013/Observations_SEA.json';
 
             //Send POST, using JSONP
             $.getJSON(url, postArgs).done(function (data) {
            
                 geoPointsSEA = data;
                 
-                console.log(geoPointsSEA);
+                console.log(geoPointsSEA); 
                 
                 //_surveyPointLayer = L.geoJson(data.features).addTo(_SPDEV.Map.map);
                 
-                 //onPointResults(geoPointsSEA);
+                 onPointResults(geoPointsSEA);
                  
                  //var image = "https://s3-us-west-2.amazonaws.com/travels2013/" + feature.properties.timestamp;
                  
                  function onEachFeature(feature, layer) {
+                 	
+                 	var counts = new String(_keycount--);
+                 	
+                 	counts = (counts.split('-')[1]);
+                 	 
                  	 var image = '<A HREF="https://s3-us-west-2.amazonaws.com/travels2013/' + feature.properties.timestamp + '.jpg" TARGET="NEW"><img width="100" height="100" class="imageThumbnail" src="https://s3-us-west-2.amazonaws.com/travels2013/' + feature.properties.timestamp + '.jpg" /></A>';
-
+					
+					
+					
+					
                  	//var image = '<img src="https://s3-us-west-2.amazonaws.com/travels2013/' + feature.properties.timestamp + '.jpg" height="100" width="100">';
-				    layer.bindPopup('<h2>' + feature.properties.comment + '</eh2>' + '<br />' + 
+				    layer.bindPopup('<h2>' + counts + " - " + feature.properties.comment + '</eh2>' + '<br />' + 
 				      '<span class="comments">Time Stamp: ' + feature.properties.timestamp + '</span><br />' + 
 				      '<span class="comments">lat/lng: ' + feature.geometry.coordinates[1] + "," + feature.geometry.coordinates[0] + '</span><br />' + 
 				      image || ""
 				      );
-				     
+				    
 				      
 				    /*  
 				    _surveyPointLayerCircles.on("mouseover", function(e) {
@@ -195,8 +296,8 @@ function getSEAPoints(){
 
                 
                 var geojsonMarkerOptions = {
-				    radius: 4,
-				    fillColor: "#028bb0",
+				    radius: 8,
+				    fillColor: "#d24a46",
 				    color: "#000",
 				    weight: 1,
 				    opacity: 1,
@@ -205,7 +306,7 @@ function getSEAPoints(){
 				
 				_SEAsurveyPointLayerCircles = L.geoJson(data.features, {
 				    pointToLayer: function (feature, latlng) {
-				        return L.marker(latlng);
+				        return L.circleMarker(latlng, geojsonMarkerOptions);
 				    },
 				    
 				    onEachFeature: onEachFeature
@@ -252,6 +353,8 @@ function getMexicoPoints(){
                 geoPoints = data;
                 
                 console.log(geoPoints);
+                
+                //onPointResults(data);
                 
                 //_surveyPointLayer = L.geoJson(data.features).addTo(_SPDEV.Map.map);
                 
@@ -310,8 +413,8 @@ function getMexicoPoints(){
 
                 
                 var geojsonMarkerOptions = {
-				    radius: 4,
-				    fillColor: "#028bb0",
+				    radius: 8,
+				    fillColor: "#d24a46",
 				    color: "#000",
 				    weight: 1,
 				    opacity: 1,
@@ -320,7 +423,7 @@ function getMexicoPoints(){
 				
 				_MexicosurveyPointLayerCircles = L.geoJson(data.features, {
 				    pointToLayer: function (feature, latlng) {
-				        return L.marker(latlng);
+				        return L.circleMarker(latlng, geojsonMarkerOptions);
 				    },
 				    
 				    onEachFeature: onEachFeature
@@ -353,41 +456,6 @@ function getMexicoPoints(){
 
 
 
-/*
-function onPointResults(data)  {
-	
-	var pointdata = geoPoints.features;
-	var numberOfPoints = geoPoints.features.length;
-	//console.log(numberOfPoints);
-
-	if(numberOfPoints === 0) {
-		return;
-	}
-	
-	for(var i=0; i < numberOfPoints; i++) {
-		var pointData = pointdata[i];
-		//console.log(pointData);
-		//var lat = pointData.coordinates[1];
-		//var lng = pointData.geometry.coordinates[0];
-		//console.log("lat: ",lat);
-		//console.log("lng: ", lng);
-		//var comments = pointData.properties.comment;
-		//console.log(cropType);
-		//var timestamp = pointData.properties.timestamp;		
-		
-		//locationsPanels(comments,timestamp);
-		
-		//imageLoader(comments, timestamp);
-		
-		
-
-		
-	}
-}
-*/
-
-
-
 
 
 function imageLoader(comments, timestamp){
@@ -416,7 +484,7 @@ function imageLoader(comments, timestamp){
 function loadLeafMaps(){
 	
 	_SPDEV.Map = new _SPDEV.LeafletMap("map", {
-			basemapUrl:'http://{s}.tiles.mapbox.com/v3/spatialdev.map-rpljvvub/{z}/{x}/{y}.png',
+			basemapUrl:'http://{s}.tiles.mapbox.com/v3/spatialdev.map-4o51gab2/{z}/{x}/{y}.png',
 			latitude: 47.6029766,
 		    longitude: -122.30845169999999,
 		    zoom: 4
@@ -429,8 +497,8 @@ function loadLeafMaps(){
 	_SPDEV.Map.addBasemap('darkCanvas', 'http://{s}.tiles.mapbox.com/v3/spatialdev.map-c9z2cyef/{z}/{x}/{y}.png', {});
 	_SPDEV.Map.addBasemap('aerial', 'http://{s}.tiles.mapbox.com/v3/spatialdev.map-hozgh18d/{z}/{x}/{y}.png', {});
 	
-	getMexicoPoints();
-	//getSEAPoints();
+	//getMexicoPoints();
+	getSEAPoints();
 }
 
 

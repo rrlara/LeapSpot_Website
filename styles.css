@@ -24,6 +24,7 @@ div#infoback {
   bottom: 0; width: 360px; background:#023902;
   opacity:0.8;
   filter:alpha(opacity=60); /* For IE8 and earlier */
+  overflow: auto;
 }
 
 div#info { 
