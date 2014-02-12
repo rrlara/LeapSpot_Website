@@ -132,6 +132,7 @@ function locateMe (position) {
 
 function onPointResults(data)  {
 	
+	stringlineArray = [];
 	
 	//var topGeoJson = '{ "type": "FeatureCollection","features": [{ "type": "Feature","geometry": {"type": "LineString","coordinates":[';
 	
@@ -197,9 +198,9 @@ function onPointResults(data)  {
 	
 	
 	var myStyle = {
-		"color" : "#787878",
-		"weight" : 3,
-		"opacity" : 0.65,
+		"color" : "#000000",
+		"weight" : 2,
+		"opacity" : 0.55,
 		"dashArray": 15
 	}; 
 
@@ -354,7 +355,7 @@ function getMexicoPoints(){
                 
                 console.log(geoPoints);
                 
-                //onPointResults(data);
+                onPointResults(data);
                 
                 //_surveyPointLayer = L.geoJson(data.features).addTo(_SPDEV.Map.map);
                 
