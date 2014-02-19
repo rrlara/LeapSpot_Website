@@ -89,23 +89,25 @@ function viewIndividualPlotsStats() {
 function addMexicoPoints(){
 	
 	_SPDEV.Map.map.addLayer(Mexicomarkers);
+	//_SPDEV.Map.map.addLayer(_RouteGeoJSON);
 	//addOutlineDistrictsBoundaries();
 }
 
 function removeMexicoPoints(){
 	_SPDEV.Map.map.removeLayer(Mexicomarkers);
+	//_SPDEV.Map.map.removeLayer(_RouteGeoJSON);
 }
 
 function addSEAPoints(){
 	
 	_SPDEV.Map.map.addLayer(SEAmarkers);
-	_SPDEV.Map.map.addLayer(_RouteGeoJSON);
+	//_SPDEV.Map.map.addLayer(_RouteGeoJSON);
 	//addOutlineDistrictsBoundaries();
 }
 
 function removeThailandPoints(){
 	_SPDEV.Map.map.removeLayer(SEAmarkers);
-	_SPDEV.Map.map.removeLayer(_RouteGeoJSON);
+	//_SPDEV.Map.map.removeLayer(_RouteGeoJSON);
 }
 
 
@@ -131,6 +133,8 @@ function locateMe (position) {
 */
 
 function onPointResults(data)  {
+	
+	
 	
 	stringlineArray = [];
 	
@@ -233,7 +237,7 @@ function getSEAPoints(){
                 console.log(geoPointsSEA); 
                 
                 //_surveyPointLayer = L.geoJson(data.features).addTo(_SPDEV.Map.map);
-                
+                _SPDEV.Map.map.removeLayer(_RouteGeoJSON);
                  onPointResults(geoPointsSEA);
                  
                  //var image = "https://s3-us-west-2.amazonaws.com/travels2013/" + feature.properties.timestamp;
