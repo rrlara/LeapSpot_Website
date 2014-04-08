@@ -187,7 +187,7 @@ function onPointResults(data)  {
 	
 	//console.log(GeoJSONLineString);
 	
-	var myVar = stringlineArray.join("");
+	
 	
 	myVar = myVar.replace(/,(?=[^,]*$)/, '');
 	
