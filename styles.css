@@ -359,10 +359,10 @@ filter: alpha(opacity=60);
 
 .hoverPreviewImage {
 	display: block;
-	width: 260px;
+	width: 220px;
 	max-width: 40vw;
 	height: auto;
-	max-height: 300px;
+	max-height: 240px;
 	object-fit: cover;
 	border-radius: 6px;
 	cursor: zoom-in;
@@ -535,5 +535,11 @@ font-size: 12px;
   #image-viewer-img {
     max-width: 100%;
     max-height: calc(100dvh - 104px);
+  }
+
+  .hoverPreviewImage {
+    width: 180px;
+    max-width: 56vw;
+    max-height: 200px;
   }
 }

@@ -165,9 +165,11 @@ function focusMarkerById(markerId, options) {
 		var parent = point.region === 'sea' ? SEAmarkers : Mexicomarkers;
 		if (parent && typeof parent.zoomToShowLayer === 'function') {
 			parent.zoomToShowLayer(point.layer, function () {
+				closeAllPreviewTooltips();
 				point.layer.openPopup();
 			});
 		} else {
+			closeAllPreviewTooltips();
 			point.layer.openPopup();
 		}
 	}
@@ -182,6 +184,18 @@ _SPDEV.Search = {
 	focusMarkerById: focusMarkerById,
 	getShareableState: getShareableState
 };
+
+function closeAllPreviewTooltips() {
+	var regions = ['sea', 'mexico'];
+	for (var regionIndex = 0; regionIndex < regions.length; regionIndex++) {
+		var points = _SPDEV.State.pointsByRegion[regions[regionIndex]] || [];
+		for (var pointIndex = 0; pointIndex < points.length; pointIndex++) {
+			if (points[pointIndex].layer && typeof points[pointIndex].layer.closeTooltip === 'function') {
+				points[pointIndex].layer.closeTooltip();
+			}
+		}
+	}
+}
 
 
 function init(){
@@ -437,10 +451,10 @@ function getSEAPoints(){
 				      image || ""
 				      );
 				    layer.bindTooltip(buildHoverPreviewHtml(feature), {
-				    	direction: 'top',
-				    	offset: [0, -8],
+						direction: 'right',
+						offset: [18, 0],
 				    	opacity: 0.97,
-				    	sticky: true,
+						sticky: false,
 				    	className: 'hover-image-tooltip'
 				    });
 				    
@@ -470,6 +484,7 @@ function getSEAPoints(){
 					});
 					
 					layer.on("click", function () {
+						closeAllPreviewTooltips();
 						setSelectedMarker(markerId);
 					});
 					
@@ -576,10 +591,10 @@ function getMexicoPoints(){
 				      image || ""
 				      );
 				    layer.bindTooltip(buildHoverPreviewHtml(feature), {
-				    	direction: 'top',
-				    	offset: [0, -8],
+						direction: 'right',
+						offset: [18, 0],
 				    	opacity: 0.97,
-				    	sticky: true,
+						sticky: false,
 				    	className: 'hover-image-tooltip'
 				    });
 				     
@@ -609,6 +624,7 @@ function getMexicoPoints(){
 					});
 					
 					layer.on("click", function () {
+						closeAllPreviewTooltips();
 						setSelectedMarker(markerId);
 					});
 					
