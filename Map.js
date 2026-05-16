@@ -1,4 +1,4 @@
-_SPDEV = {};
+var _SPDEV = {};
 var geolat = null;
 var geolon = null;
 
@@ -23,6 +23,165 @@ var _geoJSONLine = null;
 
 var _RouteGeoJSON;
 
+_SPDEV.State = {
+	currentRegion: 'sea',
+	currentBasemap: 'streets',
+	selectedMarkerId: null,
+	pointsByRegion: {
+		sea: [],
+		mexico: []
+	},
+	pointsById: {}
+};
+
+function dispatchAppEvent(name, detail) {
+	if (typeof window !== 'undefined' && window.dispatchEvent && typeof CustomEvent === 'function') {
+		window.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+	}
+}
+
+function setCurrentRegion(region, silent) {
+	_SPDEV.State.currentRegion = region;
+	if (!silent) {
+		dispatchAppEvent('travel:statechange', getShareableState());
+	}
+}
+
+function setCurrentBasemap(basemapKey, silent) {
+	_SPDEV.State.currentBasemap = basemapKey;
+	if (!silent) {
+		dispatchAppEvent('travel:statechange', getShareableState());
+	}
+}
+
+function setSelectedMarker(markerId, silent) {
+	_SPDEV.State.selectedMarkerId = markerId || null;
+	if (!silent) {
+		dispatchAppEvent('travel:statechange', getShareableState());
+	}
+}
+
+function resetRegionPoints(region) {
+	_SPDEV.State.pointsByRegion[region] = [];
+	var pointsById = _SPDEV.State.pointsById;
+	for (var markerId in pointsById) {
+		if (Object.prototype.hasOwnProperty.call(pointsById, markerId) && pointsById[markerId].region === region) {
+			delete pointsById[markerId];
+		}
+	}
+}
+
+function parseDateValue(rawValue) {
+	if (!rawValue) {
+		return null;
+	}
+	var parsed = Date.parse(rawValue);
+	if (!isNaN(parsed)) {
+		return parsed;
+	}
+	var matched = String(rawValue).match(/^(\d{4})[-_/](\d{1,2})[-_/](\d{1,2})/);
+	if (!matched) {
+		return null;
+	}
+	return Date.UTC(parseInt(matched[1], 10), parseInt(matched[2], 10) - 1, parseInt(matched[3], 10));
+}
+
+function registerPoint(region, feature, layer, markerId) {
+	var properties = feature.properties || {};
+	var point = {
+		id: markerId,
+		region: region,
+		comment: String(properties.comment || ''),
+		timestamp: String(properties.timestamp || ''),
+		dateValue: parseDateValue(properties.timestamp),
+		lat: feature.geometry.coordinates[1],
+		lng: feature.geometry.coordinates[0],
+		layer: layer
+	};
+	_SPDEV.State.pointsByRegion[region].push(point);
+	_SPDEV.State.pointsById[markerId] = point;
+	layer._markerId = markerId;
+}
+
+function getShareableState() {
+	var map = _SPDEV.Map && _SPDEV.Map.map;
+	var center = map ? map.getCenter() : { lat: null, lng: null };
+	var zoom = map ? map.getZoom() : null;
+	return {
+		region: _SPDEV.State.currentRegion,
+		basemap: _SPDEV.State.currentBasemap,
+		selected: _SPDEV.State.selectedMarkerId,
+		center: center,
+		zoom: zoom
+	};
+}
+
+function getFilteredPoints(filters) {
+	filters = filters || {};
+	var query = String(filters.query || '').toLowerCase();
+	var region = filters.region || 'all';
+	var fromDate = filters.fromDate ? Date.parse(filters.fromDate) : null;
+	var toDate = filters.toDate ? Date.parse(filters.toDate) : null;
+	if (toDate !== null && !isNaN(toDate)) {
+		toDate += 86399999;
+	}
+
+	var base = [];
+	if (region === 'all') {
+		base = _SPDEV.State.pointsByRegion.sea.concat(_SPDEV.State.pointsByRegion.mexico);
+	} else if (_SPDEV.State.pointsByRegion[region]) {
+		base = _SPDEV.State.pointsByRegion[region].slice();
+	}
+
+	return base.filter(function (point) {
+		var matchesText = !query || point.comment.toLowerCase().indexOf(query) !== -1;
+		var hasDate = point.dateValue !== null;
+		var matchesFrom = fromDate === null || !hasDate || point.dateValue >= fromDate;
+		var matchesTo = toDate === null || !hasDate || point.dateValue <= toDate;
+		return matchesText && matchesFrom && matchesTo;
+	});
+}
+
+function focusMarkerById(markerId, options) {
+	options = options || {};
+	var point = _SPDEV.State.pointsById[markerId];
+	if (!point || !point.layer || !_SPDEV.Map || !_SPDEV.Map.map) {
+		return false;
+	}
+
+	if (point.region === 'sea') {
+		removeMexicoPoints();
+		addSEAPoints();
+	} else {
+		removeThailandPoints();
+		addMexicoPoints();
+	}
+	setCurrentRegion(point.region, true);
+
+	var map = _SPDEV.Map.map;
+	var latLng = L.latLng(point.lat, point.lng);
+	map.setView(latLng, Math.max(map.getZoom(), 8));
+	if (typeof point.layer.getLatLng === 'function') {
+		var parent = point.region === 'sea' ? SEAmarkers : Mexicomarkers;
+		if (parent && typeof parent.zoomToShowLayer === 'function') {
+			parent.zoomToShowLayer(point.layer, function () {
+				point.layer.openPopup();
+			});
+		} else {
+			point.layer.openPopup();
+		}
+	}
+
+	setSelectedMarker(markerId, !!options.silent);
+	dispatchAppEvent('travel:markerfocus', { markerId: markerId, region: point.region });
+	return true;
+}
+
+_SPDEV.Search = {
+	getFilteredPoints: getFilteredPoints,
+	focusMarkerById: focusMarkerById,
+	getShareableState: getShareableState
+};
 
 
 function init(){
@@ -48,6 +207,7 @@ function viewIndividualPlotsStats() {
 	
 
     if ($('#individualPlot').hasClass('active1')) {
+    	setCurrentRegion('sea');
     
 
         removeMexicoPoints();
@@ -60,7 +220,8 @@ function viewIndividualPlotsStats() {
 	    } else {
 	        addSEAPoints();
 	        console.log("getting SEA Layer");
-	        _SPDEV.Map.map.fitBounds(SEAmarkers);
+	        _SPDEV.Map.map.fitBounds(SEAmarkers.getBounds());
+	        dispatchAppEvent('travel:statechange', getShareableState());
 	    }
 
 
@@ -68,6 +229,7 @@ function viewIndividualPlotsStats() {
 
 
     } else {
+    	setCurrentRegion('mexico');
         
         //getMexicoPoints();
         
@@ -79,7 +241,8 @@ function viewIndividualPlotsStats() {
 	    } else {
 	        addMexicoPoints();
 	        console.log("getting Mexico Layer");
-	        _SPDEV.Map.map.fitBounds(Mexicomarkers);
+	        _SPDEV.Map.map.fitBounds(Mexicomarkers.getBounds());
+	        dispatchAppEvent('travel:statechange', getShareableState());
 	    }
 
   
@@ -94,7 +257,9 @@ function addMexicoPoints(){
 }
 
 function removeMexicoPoints(){
-	_SPDEV.Map.map.removeLayer(Mexicomarkers);
+	if (Mexicomarkers && _SPDEV.Map.map.hasLayer(Mexicomarkers)) {
+		_SPDEV.Map.map.removeLayer(Mexicomarkers);
+	}
 	//_SPDEV.Map.map.removeLayer(_RouteGeoJSON);
 }
 
@@ -106,7 +271,9 @@ function addSEAPoints(){
 }
 
 function removeThailandPoints(){
-	_SPDEV.Map.map.removeLayer(SEAmarkers);
+	if (SEAmarkers && _SPDEV.Map.map.hasLayer(SEAmarkers)) {
+		_SPDEV.Map.map.removeLayer(SEAmarkers);
+	}
 	//_SPDEV.Map.map.removeLayer(_RouteGeoJSON);
 }
 
@@ -118,7 +285,7 @@ function slideLocationPanelWrapperOut(){
 	
 }
 
-function slideLocationPanelWrapperOut(){
+function slideLocationPanelWrapperIn(){
 	
 	$("#locationPanelWrapper").animate({"right":"-320px"}, "slow");
 	
@@ -189,6 +356,7 @@ function onPointResults(data)  {
 	
 	
 	
+	var myVar = stringlineArray.join("");
 	myVar = myVar.replace(/,(?=[^,]*$)/, '');
 	
 	
@@ -231,13 +399,17 @@ function getSEAPoints(){
 
             //Send POST, using JSONP
             $.getJSON(url, postArgs).done(function (data) {
+            	resetRegionPoints('sea');
+            	var markerIndex = 0;
            
                 geoPointsSEA = data;
                 
                 console.log(geoPointsSEA); 
                 
                 //_surveyPointLayer = L.geoJson(data.features).addTo(_SPDEV.Map.map);
-                _SPDEV.Map.map.removeLayer(_RouteGeoJSON);
+                if (_RouteGeoJSON && _SPDEV.Map.map.hasLayer(_RouteGeoJSON)) {
+                	_SPDEV.Map.map.removeLayer(_RouteGeoJSON);
+                }
                  onPointResults(geoPointsSEA);
                  
                  //var image = "https://s3-us-west-2.amazonaws.com/travels2013/" + feature.properties.timestamp;
@@ -245,20 +417,32 @@ function getSEAPoints(){
                  function onEachFeature(feature, layer) {
                  	
                  	var counts = new String(_keycount--);
+                 	var panelDiv = '';
+                 	var markerId = 'sea-' + markerIndex++;
                  	
                  	counts = (counts.split('-')[1]);
+                 	registerPoint('sea', feature, layer, markerId);
                  	 
-                 	 var image = '<A HREF="https://s3-us-west-2.amazonaws.com/travels2013/' + feature.properties.timestamp + '.jpg" TARGET="NEW"><img width="100" height="100" class="imageThumbnail" src="https://s3-us-west-2.amazonaws.com/travels2013/' + feature.properties.timestamp + '.jpg" /></A>';
+                 	 var image = buildPopupImageHtml(feature);
 					
 					
 					
 					
                  	//var image = '<img src="https://s3-us-west-2.amazonaws.com/travels2013/' + feature.properties.timestamp + '.jpg" height="100" width="100">';
-				    layer.bindPopup('<h2>' + counts + " - " + feature.properties.comment + '</eh2>' + '<br />' + 
-				      '<span class="comments">Time Stamp: ' + feature.properties.timestamp + '</span><br />' + 
+				    var safeComment = escapeHtml(feature.properties.comment || '');
+				    var safeTimestamp = escapeHtml(feature.properties.timestamp || '');
+				    layer.bindPopup('<h2>' + counts + " - " + safeComment + '</h2>' + '<br />' + 
+				      '<span class="comments">Time Stamp: ' + safeTimestamp + '</span><br />' + 
 				      '<span class="comments">lat/lng: ' + feature.geometry.coordinates[1] + "," + feature.geometry.coordinates[0] + '</span><br />' + 
 				      image || ""
 				      );
+				    layer.bindTooltip(buildHoverPreviewHtml(feature), {
+				    	direction: 'top',
+				    	offset: [0, -8],
+				    	opacity: 0.97,
+				    	sticky: true,
+				    	className: 'hover-image-tooltip'
+				    });
 				    
 				      
 				    /*  
@@ -285,7 +469,11 @@ function getSEAPoints(){
 						
 					});
 					
-					layer.on("mouseout", function(e) {
+					layer.on("click", function () {
+						setSelectedMarker(markerId);
+					});
+					
+						layer.on("mouseout", function(e) {
 			            $("#" + panelDiv).removeClass("activepanel");
 			            
 			            console.log(panelDiv);
@@ -323,7 +511,10 @@ function getSEAPoints(){
     				_SPDEV.Map.map.addLayer(SEAmarkers);
     				
     				
-    			_SPDEV.Map.map.fitBounds(SEAmarkers);
+    			_SPDEV.Map.map.fitBounds(SEAmarkers.getBounds());
+    			setCurrentRegion('sea', true);
+    			dispatchAppEvent('travel:regionloaded', { region: 'sea' });
+    			dispatchAppEvent('travel:statechange', getShareableState());
     			
     			
     			
@@ -335,6 +526,7 @@ function getSEAPoints(){
             }).fail(function (jqxhr, textStatus, error) {
                 var err = textStatus + ', ' + error;
                 console.log("Request Failed: " + err);
+                showStatusMessage("Could not load Southeast Asia points. Please retry.");
             });
             
            
@@ -354,6 +546,8 @@ function getMexicoPoints(){
 
             //Send POST, using JSONP
             $.getJSON(url, postArgs).done(function (data) {
+            	resetRegionPoints('mexico');
+            	var markerIndex = 0;
            
                 geoPoints = data;
                 
@@ -368,14 +562,26 @@ function getMexicoPoints(){
                  //var image = "https://s3-us-west-2.amazonaws.com/travels2013/" + feature.properties.timestamp;
                  
                  function onEachFeature(feature, layer) {
-                 	 var image = '<A HREF="https://s3-us-west-2.amazonaws.com/travels2013/' + feature.properties.timestamp + '.jpg" TARGET="NEW"><img width="100" height="100" class="imageThumbnail" src="https://s3-us-west-2.amazonaws.com/travels2013/' + feature.properties.timestamp + '.jpg" /></A>';
+                 	 var panelDiv = '';
+                 	 var markerId = 'mexico-' + markerIndex++;
+                 	 registerPoint('mexico', feature, layer, markerId);
+                 	 var image = buildPopupImageHtml(feature);
 
                  	//var image = '<img src="https://s3-us-west-2.amazonaws.com/travels2013/' + feature.properties.timestamp + '.jpg" height="100" width="100">';
-				    layer.bindPopup('<h2>' + feature.properties.comment + '</eh2>' + '<br />' + 
-				      '<span class="comments">Time Stamp: ' + feature.properties.timestamp + '</span><br />' + 
+				    var safeComment = escapeHtml(feature.properties.comment || '');
+				    var safeTimestamp = escapeHtml(feature.properties.timestamp || '');
+				    layer.bindPopup('<h2>' + safeComment + '</h2>' + '<br />' + 
+				      '<span class="comments">Time Stamp: ' + safeTimestamp + '</span><br />' + 
 				      '<span class="comments">lat/lng: ' + feature.geometry.coordinates[1] + "," + feature.geometry.coordinates[0] + '</span><br />' + 
 				      image || ""
 				      );
+				    layer.bindTooltip(buildHoverPreviewHtml(feature), {
+				    	direction: 'top',
+				    	offset: [0, -8],
+				    	opacity: 0.97,
+				    	sticky: true,
+				    	className: 'hover-image-tooltip'
+				    });
 				     
 				      
 				    /*  
@@ -400,6 +606,10 @@ function getMexicoPoints(){
 						
 						//$("#" + markerid).css("color","#009fe4");
 						
+					});
+					
+					layer.on("click", function () {
+						setSelectedMarker(markerId);
 					});
 					
 					layer.on("mouseout", function(e) {
@@ -440,7 +650,10 @@ function getMexicoPoints(){
     				_SPDEV.Map.map.addLayer(Mexicomarkers);
     				
     				
-    			_SPDEV.Map.map.fitBounds(Mexicomarkers);
+    			_SPDEV.Map.map.fitBounds(Mexicomarkers.getBounds());
+    			setCurrentRegion('mexico', true);
+    			dispatchAppEvent('travel:regionloaded', { region: 'mexico' });
+    			dispatchAppEvent('travel:statechange', getShareableState());
     			
     			
     			
@@ -452,6 +665,7 @@ function getMexicoPoints(){
             }).fail(function (jqxhr, textStatus, error) {
                 var err = textStatus + ', ' + error;
                 console.log("Request Failed: " + err);
+                showStatusMessage("Could not load Mexico points. Please retry.");
             });
             
            
@@ -489,18 +703,29 @@ function imageLoader(comments, timestamp){
 function loadLeafMaps(){
 	
 	_SPDEV.Map = new _SPDEV.LeafletMap("map", {
-			basemapUrl:'http://{s}.tiles.mapbox.com/v3/spatialdev.map-4o51gab2/{z}/{x}/{y}.png',
+			basemapUrl:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+			attributionTxt: '&copy; OpenStreetMap contributors',
+			scrollWheelZoom: true,
 			latitude: 47.6029766,
 		    longitude: -122.30845169999999,
-		    zoom: 4
+		    loadZoom: 4
 
 			});
 	
 	
-	_SPDEV.Map.addBasemap('terrain', 'http://{s}.tiles.mapbox.com/v3/spatialdev.map-4o51gab2/{z}/{x}/{y}.png', {});
-	_SPDEV.Map.addBasemap('streets', 'http://{s}.tiles.mapbox.com/v3/spatialdev.map-rpljvvub/{z}/{x}/{y}.png', {});
-	_SPDEV.Map.addBasemap('darkCanvas', 'http://{s}.tiles.mapbox.com/v3/spatialdev.map-c9z2cyef/{z}/{x}/{y}.png', {});
-	_SPDEV.Map.addBasemap('aerial', 'http://{s}.tiles.mapbox.com/v3/spatialdev.map-hozgh18d/{z}/{x}/{y}.png', {});
+	_SPDEV.Map.addBasemap('terrain', 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+		attributionTxt: 'Map data: &copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap (CC-BY-SA)'
+	});
+	_SPDEV.Map.addBasemap('streets', 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		attributionTxt: '&copy; OpenStreetMap contributors'
+	});
+	_SPDEV.Map.addBasemap('darkCanvas', 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+		attributionTxt: '&copy; OpenStreetMap contributors &copy; CARTO'
+	});
+	_SPDEV.Map.addBasemap('aerial', 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+		attributionTxt: 'Tiles &copy; Esri'
+	});
+	setCurrentBasemap('streets', true);
 	
 	//getMexicoPoints();
 	getSEAPoints();
@@ -521,7 +746,7 @@ _SPDEV.LeafletMap = function(mapId, options) {
 		this.continuousWorld = options.continuousWorld || false;
 		var centerLatitude = options.latitude || -16.5;
 		var centerLongitude = options.longitude || -67;
-		var basemapUrl = options.basemapUrl || 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+		var basemapUrl = options.basemapUrl || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
 
 		this.map  = new L.Map(mapId, {
@@ -557,6 +782,7 @@ _SPDEV.LeafletMap = function(mapId, options) {
 };
 
 _SPDEV.LeafletMap.prototype.addBasemap = function(key, basemapUrl, options) {
+		options = options || {};
 		var minZoom = options.minZoom || this.minZoom;
 		var maxZoom = options.maxZoom || this.maxZoom ;
 		var attributionTxt = options.attributionTxt || '';
@@ -579,5 +805,159 @@ _SPDEV.LeafletMap.prototype.changeBasemap  = function(basemapKey) {
 	this.map.removeLayer(this.currentBasemap);
 	this.map.addLayer(this.basemaps[basemapKey]);
 	this.currentBasemap = this.basemaps[basemapKey];
+	setCurrentBasemap(basemapKey);
 };
 
+function escapeHtml(value) {
+	return String(value)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;');
+}
+
+function showStatusMessage(message) {
+	var status = document.getElementById("status-message");
+	if (status) {
+		status.textContent = message;
+	}
+}
+
+function getImageCandidates(feature) {
+	var baseUrl = 'https://s3-us-west-2.amazonaws.com/travels2013/';
+	var properties = (feature && feature.properties) || {};
+	var candidates = [];
+	var sourceKeys = ['image', 'imageUrl', 'photo', 'filename', 'file', 'img', 'timestamp'];
+
+	function addCandidate(value) {
+		if (!value) {
+			return;
+		}
+		var cleanValue = String(value).trim();
+		if (!cleanValue) {
+			return;
+		}
+
+		var isAbsolute = /^https?:\/\//i.test(cleanValue);
+		var hasExtension = /\.[a-zA-Z0-9]{2,5}$/.test(cleanValue);
+		var url = isAbsolute ? cleanValue : (baseUrl + cleanValue);
+		var encodedUrl = isAbsolute ? encodeURI(cleanValue) : (baseUrl + encodeURIComponent(cleanValue));
+
+		if (!hasExtension) {
+			pushUnique(url + '.jpg');
+			pushUnique(url + '.JPG');
+			pushUnique(encodedUrl + '.jpg');
+			pushUnique(encodedUrl + '.JPG');
+		}
+		pushUnique(url);
+		pushUnique(encodedUrl);
+	}
+
+	function pushUnique(url) {
+		if (url && candidates.indexOf(url) === -1) {
+			candidates.push(url);
+		}
+	}
+
+	for (var i = 0; i < sourceKeys.length; i++) {
+		addCandidate(properties[sourceKeys[i]]);
+	}
+	addCandidate(convertPstTimestampToCst(properties.timestamp));
+
+	return candidates;
+}
+
+function convertPstTimestampToCst(timestamp) {
+	var matched = String(timestamp || '').match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2}) PST$/);
+	if (!matched) {
+		return '';
+	}
+
+	var date = new Date(Date.UTC(
+		parseInt(matched[1], 10),
+		parseInt(matched[2], 10) - 1,
+		parseInt(matched[3], 10),
+		parseInt(matched[4], 10) + 2,
+		parseInt(matched[5], 10),
+		parseInt(matched[6], 10)
+	));
+
+	return [
+		date.getUTCFullYear(),
+		padDatePart(date.getUTCMonth() + 1),
+		padDatePart(date.getUTCDate())
+	].join('-') + ' ' + [
+		padDatePart(date.getUTCHours()),
+		padDatePart(date.getUTCMinutes()),
+		padDatePart(date.getUTCSeconds())
+	].join(':') + ' CST';
+}
+
+function padDatePart(value) {
+	return value < 10 ? '0' + value : String(value);
+}
+
+function buildPopupImageHtml(feature) {
+	var candidates = getImageCandidates(feature);
+	if (candidates.length === 0) {
+		return '';
+	}
+	return '<button type="button" class="popup-image-link" onclick="return openFullscreenImageFromPopup(event, this);" ontouchend="return openFullscreenImageFromPopup(event, this);" onpointerup="return openFullscreenImageFromPopup(event, this);">' +
+		buildImageTag('imageThumbnail', candidates, '180') +
+		'</button>';
+}
+
+function buildHoverPreviewHtml(feature) {
+	var candidates = getImageCandidates(feature);
+	if (candidates.length === 0) {
+		return '<span class="hover-image-empty">No image available</span>';
+	}
+	return '<button type="button" class="popup-image-link hover-preview-link" onclick="return openFullscreenImageFromPopup(event, this);" ontouchend="return openFullscreenImageFromPopup(event, this);" onpointerup="return openFullscreenImageFromPopup(event, this);">' +
+		buildImageTag('hoverPreviewImage', candidates, '') +
+		'</button>';
+}
+
+function escapeHtmlAttribute(value) {
+	return String(value)
+		.replace(/&/g, '&amp;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;');
+}
+
+function buildImageTag(cssClass, candidates, width) {
+	if (!candidates || candidates.length === 0) {
+		return '';
+	}
+
+	var widthAttr = width ? ' width="' + width + '"' : '';
+	var serialized = escapeHtmlAttribute(candidates.join('|'));
+	return '<img' + widthAttr +
+		' class="' + cssClass + '"' +
+		' src="' + escapeHtmlAttribute(candidates[0]) + '"' +
+		' data-candidates="' + serialized + '"' +
+		' data-candidate-index="0"' +
+		' onerror="handleImageError(this)" />';
+}
+
+function handleImageError(imgElement) {
+	var serialized = imgElement.getAttribute('data-candidates') || '';
+	if (!serialized) {
+		imgElement.style.display = 'none';
+		return;
+	}
+
+	var candidates = serialized.split('|');
+	var currentIndex = parseInt(imgElement.getAttribute('data-candidate-index') || '0', 10);
+	var nextIndex = currentIndex + 1;
+
+	if (nextIndex < candidates.length) {
+		imgElement.setAttribute('data-candidate-index', String(nextIndex));
+		imgElement.src = candidates[nextIndex];
+		return;
+	}
+
+	imgElement.style.display = 'none';
+}

@@ -1,83 +1,18 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <title>My 2013 Travels</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet"
-    href="http://cdn.leafletjs.com/leaflet-0.6.2/leaflet.css" />
-  <!--[if lte IE 8]>
-    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.4/leaflet.ie.css" />
-  <![endif]-->
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="MarkerCluster.css" />
-  <link rel="stylesheet" href="MarkerCluster.Default.css" />
-  <!--[if lte IE 8]><link rel="stylesheet" href="markercluster/MarkerCluster.Default.ie.css" /><![endif]-->
-  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js">
-  
-  </script>
-  <script src="Map.js" type="text/javascript"></script>
-  <script>
-  
-  /*
-  // check for Geolocation support
-		if (navigator.geolocation) {
-		  //console.log('Geolocation is supported!');
-		}
-		else {
-		 // console.log('Geolocation is not supported for this Browser/OS version yet.');
-		}
-	*/	
-	
-	
-	
-  $(document).ready(function(){
-  	
-  	init();
-  	
-  	var viewportWidth = $(window).width();
-	var viewportHeight = $(window).height();
-	
-	$("#infoback").width(viewportWidth);
-  	
-  	
-  	IS_IPAD = navigator.userAgent.match(/iPad/i) != null;
-		IS_IPHONE = (navigator.userAgent.match(/iPhone/i) != null) || (navigator.userAgent.match(/iPod/i) != null);
-		if (IS_IPAD) {
-		IS_IPHONE = false;
-		$("#infoback").width(viewportWidth);
-		}else{
-			console.log("Not iPad");
-			$("#infoback").width(320);
-		}
-  	
-  	
-  	
-    $("#sidebar-off").click(function(){
-    $("#infoback").hide('slow');
-    });
-    $("#sidebar-on").click(function(){
-    $("#infoback").show('slow');
-    });
-    
-    //navigator.geolocation.getCurrentPosition(locateMe);
-
-		loadLeafMaps();
-		
-
-		});
-  </script>
-  <script>
-	  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-	  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-	  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-	  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-	
-	  ga('create', 'UA-46842357-1', '50.112.94.194');
-	  ga('send', 'pageview');
-
-	</script>
+  <meta name="description" content="Interactive travel map following Rene and Rebecca through Mexico and Southeast Asia with photos and notes." />
+  <meta property="og:title" content="My 2013 Travels" />
+  <meta property="og:description" content="Explore geotagged travel moments in Mexico and Southeast Asia." />
+  <meta property="og:type" content="website" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <link rel="stylesheet" href="styles.css?v=mobile-overlay-4" />
 </head>
 <body>
   <div id="map"></div>
@@ -91,12 +26,12 @@
       <span class="switch-selection"></span>
     </div>
     <div id="map-top-panel" class="clearfix">
-		<div id="districtLevel" class="Tab1">
+		<div id="districtLevel" class="Tab1" role="button" tabindex="0" aria-label="Show Mexico route">
 			<div id="districtLevelText" class="Tab1Text active1">
 				Mexico
 			</div>
 		</div>
-		<div id="individualPlot" class="Tab1 active1">
+		<div id="individualPlot" class="Tab1 active1" role="button" tabindex="0" aria-label="Show Southeast Asia route">
 			<div id="individualPlotText" class="Tab1Text active1">
 				Southeast Asia
 			</div>
@@ -125,22 +60,46 @@
     <p class="disclaimer">
       
     </p></div>
+    <div id="search-panel">
+      <h2>Search Trips</h2>
+      <input id="search-comment" type="text" placeholder="Search comments..." aria-label="Search comments" />
+      <div class="search-row">
+        <label for="filter-region">Region</label>
+        <select id="filter-region" aria-label="Filter by region">
+          <option value="all">All</option>
+          <option value="sea">Southeast Asia</option>
+          <option value="mexico">Mexico</option>
+        </select>
+      </div>
+      <div class="search-row">
+        <label for="filter-from">From</label>
+        <input id="filter-from" type="date" aria-label="From date" />
+      </div>
+      <div class="search-row">
+        <label for="filter-to">To</label>
+        <input id="filter-to" type="date" aria-label="To date" />
+      </div>
+      <p id="search-count">0 results</p>
+      <div id="search-results" role="list" aria-label="Search results"></div>
+    </div>
+    <p id="status-message" class="status-message" aria-live="polite"></p>
   </div>
   
   <div id="map-panel">
-		<div id="aerial" class="mapicons">Aerial</div>
-		<div id="darkCanvas" class="mapicons">Dark</div>
-		<div id="streets" class="mapicons activeicon">Streets</div>
-		<div id="terrain" class="mapicons">Terrain</div>
+		<div id="aerial" class="mapicons" role="button" tabindex="0" aria-label="Switch to aerial basemap">Aerial</div>
+		<div id="darkCanvas" class="mapicons" role="button" tabindex="0" aria-label="Switch to dark basemap">Dark</div>
+		<div id="streets" class="mapicons activeicon" role="button" tabindex="0" aria-label="Switch to streets basemap">Streets</div>
+		<div id="terrain" class="mapicons" role="button" tabindex="0" aria-label="Switch to terrain basemap">Terrain</div>
 		<div class="closer"></div>
  </div>
-  <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
-  <script src="http://cdn.leafletjs.com/leaflet-0.6.2/leaflet.js"></script>
-  <script src="leaflet.markercluster.js"></script>
-  <script>
-
-
-
-  </script>
+  <div id="image-viewer" aria-hidden="true">
+    <button id="image-viewer-close" type="button" aria-label="Close fullscreen image">Exit</button>
+    <img id="image-viewer-img" alt="Fullscreen travel photo" />
+  </div>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+  <script src="Map.js?v=mobile-overlay-5" type="text/javascript"></script>
+  <script src="app.js?v=mobile-overlay-5" type="text/javascript"></script>
 </body>
 </html>
