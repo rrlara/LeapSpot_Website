@@ -156,18 +156,22 @@ width: 100%;
 
 
 #map-panel{
-	right: 340px;
-	width: 220px;
-	position: absolute;
-	top: 90px;
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 8px;
-	padding: 10px;
-	z-index: 1050;
+	margin: 0 32px 24px;
+	padding: 12px;
 	border: 1px solid #787878;
 	border-radius: 8px;
 	background: rgba(10, 10, 10, 0.7);
+}
+
+#map-panel h2 {
+	margin: 0 0 10px;
+	font-size: 16px;
+}
+
+.basemap-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px;
 }
 
 #aerial {
@@ -521,9 +525,7 @@ font-size: 12px;
   }
 
   #map-panel {
-    right: 12px;
-    top: 150px;
-    width: 200px;
+    margin: 0 24px 16px;
   }
 
   #image-viewer {

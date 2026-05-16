@@ -82,16 +82,17 @@
       <p id="search-count">0 results</p>
       <div id="search-results" role="list" aria-label="Search results"></div>
     </div>
+    <div id="map-panel">
+      <h2>Basemap</h2>
+      <div class="basemap-grid">
+        <div id="aerial" class="mapicons" role="button" tabindex="0" aria-label="Switch to aerial basemap">Aerial</div>
+        <div id="darkCanvas" class="mapicons" role="button" tabindex="0" aria-label="Switch to dark basemap">Dark</div>
+        <div id="streets" class="mapicons activeicon" role="button" tabindex="0" aria-label="Switch to streets basemap">Streets</div>
+        <div id="terrain" class="mapicons" role="button" tabindex="0" aria-label="Switch to terrain basemap">Terrain</div>
+      </div>
+    </div>
     <p id="status-message" class="status-message" aria-live="polite"></p>
   </div>
-  
-  <div id="map-panel">
-		<div id="aerial" class="mapicons" role="button" tabindex="0" aria-label="Switch to aerial basemap">Aerial</div>
-		<div id="darkCanvas" class="mapicons" role="button" tabindex="0" aria-label="Switch to dark basemap">Dark</div>
-		<div id="streets" class="mapicons activeicon" role="button" tabindex="0" aria-label="Switch to streets basemap">Streets</div>
-		<div id="terrain" class="mapicons" role="button" tabindex="0" aria-label="Switch to terrain basemap">Terrain</div>
-		<div class="closer"></div>
- </div>
   <div id="image-viewer" aria-hidden="true">
     <button id="image-viewer-close" type="button" aria-label="Close fullscreen image">Exit</button>
     <img id="image-viewer-img" alt="Fullscreen travel photo" />
@@ -99,7 +100,7 @@
   <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-  <script src="Map.js?v=mobile-overlay-5" type="text/javascript"></script>
-  <script src="app.js?v=mobile-overlay-5" type="text/javascript"></script>
+  <script src="Map.js?v=sidebar-basemap-1" type="text/javascript"></script>
+  <script src="app.js?v=sidebar-basemap-1" type="text/javascript"></script>
 </body>
 </html>
