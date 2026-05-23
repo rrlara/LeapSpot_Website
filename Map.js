@@ -22,6 +22,8 @@ var _keycount = 0;
 var _geoJSONLine = null;
 
 var _RouteGeoJSON;
+var _RouteArrowLayer;
+var _RouteCoordinates = [];
 
 _SPDEV.State = {
 	currentRegion: 'sea',
@@ -266,6 +268,9 @@ function viewIndividualPlotsStats() {
 function addMexicoPoints(){
 	
 	_SPDEV.Map.map.addLayer(Mexicomarkers);
+	if (geoPoints) {
+		onPointResults(geoPoints);
+	}
 	//_SPDEV.Map.map.addLayer(_RouteGeoJSON);
 	//addOutlineDistrictsBoundaries();
 }
@@ -274,12 +279,16 @@ function removeMexicoPoints(){
 	if (Mexicomarkers && _SPDEV.Map.map.hasLayer(Mexicomarkers)) {
 		_SPDEV.Map.map.removeLayer(Mexicomarkers);
 	}
+	clearRouteOverlay();
 	//_SPDEV.Map.map.removeLayer(_RouteGeoJSON);
 }
 
 function addSEAPoints(){
 	
 	_SPDEV.Map.map.addLayer(SEAmarkers);
+	if (geoPointsSEA) {
+		onPointResults(geoPointsSEA);
+	}
 	//_SPDEV.Map.map.addLayer(_RouteGeoJSON);
 	//addOutlineDistrictsBoundaries();
 }
@@ -288,6 +297,7 @@ function removeThailandPoints(){
 	if (SEAmarkers && _SPDEV.Map.map.hasLayer(SEAmarkers)) {
 		_SPDEV.Map.map.removeLayer(SEAmarkers);
 	}
+	clearRouteOverlay();
 	//_SPDEV.Map.map.removeLayer(_RouteGeoJSON);
 }
 
@@ -314,19 +324,10 @@ function locateMe (position) {
 */
 
 function onPointResults(data)  {
-	
-	
-	
-	stringlineArray = [];
-	
-	//var topGeoJson = '{ "type": "FeatureCollection","features": [{ "type": "Feature","geometry": {"type": "LineString","coordinates":[';
-	
-	var topGeoJson = ['{"type": "LineString","coordinates": ['];
-	
-	stringlineArray.push(topGeoJson);
-	
-	var pointdata = data.features;
-	pointdata = pointdata.reverse();
+	clearRouteOverlay();
+
+	var routeCoordinates = [];
+	var pointdata = data.features.slice().reverse();
 	var numberOfPoints = data.features.length;
 	console.log(numberOfPoints);
 
@@ -343,60 +344,107 @@ function onPointResults(data)  {
 		//console.log("lng: ", lng);
 		
 		if (lat && lng){
-			
-			var pointItem = "[" + lng + ", " + lat + "],";
-		
-			//console.log(pointItem);
-			
-			stringlineArray.push(pointItem);
-			
+			routeCoordinates.push([lng, lat]);
 		}
-		
-		
-		
-		
-		
 	}
-	
-	//SEAPointArray.shift();
-	
-	//var bottomGeoJson = [']}'];
-	
-	stringlineArray.push(']}');
-	
-	//var GeoJSONLineString = topGeoJson.concat(SEAPointArray, bottomGeoJson);
-	
-	//console.log(GeoJSONLineString);
-	
-	
-	
-	var myVar = stringlineArray.join("");
-	myVar = myVar.replace(/,(?=[^,]*$)/, '');
-	
-	
-	console.log(myVar);
-	
-	_geoJSONLine = jQuery.parseJSON(myVar);
-	
-	
-	
+
+	_geoJSONLine = {
+		type: "LineString",
+		coordinates: routeCoordinates
+	};
+	_RouteCoordinates = routeCoordinates;
+
 	console.log(_geoJSONLine);
 	
 	
 	var myStyle = {
 		"color" : "#000000",
-		"weight" : 2,
-		"opacity" : 0.55,
-		"dashArray": 15
+		"weight" : 3,
+		"opacity" : 0.65
 	}; 
 
 	
 	_RouteGeoJSON = new L.GeoJSON(_geoJSONLine, {
 		    style: myStyle
 		});
-       _SPDEV.Map.map.addLayer(_RouteGeoJSON);
-	
-	
+	_SPDEV.Map.map.addLayer(_RouteGeoJSON);
+	addRouteArrows(routeCoordinates);
+}
+
+function clearRouteOverlay() {
+	if (_RouteGeoJSON && _SPDEV.Map.map.hasLayer(_RouteGeoJSON)) {
+		_SPDEV.Map.map.removeLayer(_RouteGeoJSON);
+	}
+	if (_RouteArrowLayer && _SPDEV.Map.map.hasLayer(_RouteArrowLayer)) {
+		_SPDEV.Map.map.removeLayer(_RouteArrowLayer);
+	}
+	_RouteCoordinates = [];
+}
+
+function addRouteArrows(routeCoordinates) {
+	if (_RouteArrowLayer && _SPDEV.Map.map.hasLayer(_RouteArrowLayer)) {
+		_SPDEV.Map.map.removeLayer(_RouteArrowLayer);
+	}
+	_RouteArrowLayer = L.layerGroup();
+	var segmentCount = routeCoordinates.length - 1;
+	if (segmentCount < 1) {
+		return;
+	}
+
+	var step = getRouteArrowStep(segmentCount);
+	for (var coordinateIndex = 0; coordinateIndex < segmentCount; coordinateIndex += step) {
+		var start = routeCoordinates[coordinateIndex];
+		var end = routeCoordinates[coordinateIndex + 1];
+		addRouteArrow(start, end);
+	}
+	_SPDEV.Map.map.addLayer(_RouteArrowLayer);
+}
+
+function refreshRouteArrows() {
+	if (_RouteCoordinates.length > 1) {
+		addRouteArrows(_RouteCoordinates);
+	}
+}
+
+function getRouteArrowStep(segmentCount) {
+	var zoom = _SPDEV.Map.map.getZoom();
+	if (zoom >= 10) {
+		return 1;
+	}
+	if (zoom >= 8) {
+		return 2;
+	}
+	if (zoom >= 6) {
+		return 3;
+	}
+	if (zoom >= 4) {
+		return Math.max(4, Math.ceil(segmentCount / 24));
+	}
+	return Math.max(8, Math.ceil(segmentCount / 12));
+}
+
+function addRouteArrow(startCoordinate, endCoordinate) {
+	var startLatLng = L.latLng(startCoordinate[1], startCoordinate[0]);
+	var endLatLng = L.latLng(endCoordinate[1], endCoordinate[0]);
+	var zoom = _SPDEV.Map.map.getZoom();
+	var startPoint = _SPDEV.Map.map.project(startLatLng, zoom);
+	var endPoint = _SPDEV.Map.map.project(endLatLng, zoom);
+	var midpointPoint = L.point(
+		(startPoint.x + endPoint.x) / 2,
+		(startPoint.y + endPoint.y) / 2
+	);
+	var midpoint = _SPDEV.Map.map.unproject(midpointPoint, zoom);
+	var angle = Math.atan2(endPoint.y - startPoint.y, endPoint.x - startPoint.x) * 180 / Math.PI;
+
+	L.marker(midpoint, {
+		icon: L.divIcon({
+			className: 'route-arrow-icon',
+			html: '<span class="route-arrow-head" style="transform: translate(-50%, -50%) rotate(' + angle + 'deg);"></span>',
+			iconSize: [18, 18],
+			iconAnchor: [9, 9]
+		}),
+		interactive: false
+	}).addTo(_RouteArrowLayer);
 }
 
 
@@ -741,6 +789,7 @@ function loadLeafMaps(){
 	_SPDEV.Map.addBasemap('aerial', 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
 		attributionTxt: 'Tiles &copy; Esri'
 	});
+	_SPDEV.Map.map.on('zoomend', refreshRouteArrows);
 	setCurrentBasemap('streets', true);
 	
 	//getMexicoPoints();

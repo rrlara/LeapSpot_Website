@@ -33,15 +33,106 @@ div#infoback {
   overflow: auto;
 }
 
-div#info { 
-  margin: 132px 32px 24px;
+#sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 24px 32px 16px;
 }
 
-div#info h2 { 
+#sidebar-header h1 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.sidebar-kicker,
+.control-label {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+#sidebar-close,
+#sidebar-open {
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+#sidebar-close {
+  min-width: 56px;
+  min-height: 38px;
+}
+
+#sidebar-open {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 1100;
+  min-width: 72px;
+  min-height: 42px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+#sidebar-close:hover,
+#sidebar-close:focus-visible,
+#sidebar-open:hover,
+#sidebar-open:focus-visible {
+  background: rgba(236,119,33,0.9);
+  outline: none;
+}
+
+#dataset-panel {
+  margin: 0 32px 20px;
+}
+
+.dataset-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.dataset-option {
+  border: 0;
+  border-radius: 6px;
+  padding: 10px 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dataset-option.active1 {
+  background: #d24a46;
+  color: #fff;
+}
+
+.dataset-option:focus-visible {
+  outline: 2px solid #ec7721;
+  outline-offset: 2px;
+}
+
+div#info {
+  margin: 0 32px 24px;
+}
+
+div#info h2 {
   margin-bottom: 0px;
 }
 
-#map {   
+#map {
   position: absolute;
 top: 0;
 bottom: 0;
@@ -55,105 +146,6 @@ width: 100%;
 .disclaimer {
   font-size: 0.7em;
 }
-
-#collapse {
-  position:absolute; top: 0; right: 140px;
-  z-index: 1100;
-}
-
-
-.switch {
-  position: relative;
-  margin: 20px auto;
-  height: 26px;
-  width: 120px;
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 3px;
-  -webkit-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px rgba(255, 255, 255, 0.1);
-}
-
-.switch-yellow .switch-selection {
-  background: #c4bb61;
-  background-image: -webkit-linear-gradient(top, #e0dd94, #c4bb61);
-  background-image: -moz-linear-gradient(top, #e0dd94, #c4bb61);
-  background-image: -o-linear-gradient(top, #e0dd94, #c4bb61);
-  background-image: linear-gradient(to bottom, #e0dd94, #c4bb61);
-}
-
-.switch-label {
-  position: relative;
-  z-index: 2;
-  float: left;
-  width: 58px;
-  line-height: 26px;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.35);
-  text-align: center;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.45);
-  cursor: pointer;
-}
-
-.switch-label:active {
-  font-weight: bold;
-}
-
-.switch-label-off {
-  padding-left: 2px;
-}
-
-.switch-label-on {
-  padding-right: 2px;
-}
-
-.switch-input {
-  display: none;
-}
-
-#districtLevel:focus-visible,
-#individualPlot:focus-visible,
-#sidebarOn:focus-visible,
-#sidebarOff:focus-visible {
-  outline: 2px solid #ec7721;
-  outline-offset: 2px;
-}
-.switch-input:checked + .switch-label {
-  font-weight: bold;
-  color: rgba(0, 0, 0, 0.65);
-  text-shadow: 0 1px rgba(255, 255, 255, 0.25);
-  -webkit-transition: 0.15s ease-out;
-  -moz-transition: 0.15s ease-out;
-  -o-transition: 0.15s ease-out;
-  transition: 0.15s ease-out;
-}
-
-.switch-input:checked + .switch-label-on ~ .switch-selection {
-  /* Note: left: 50% doesn't transition in WebKit */
-  left: 60px;
-}
-
-.switch-selection {
-  display: block;
-  position: absolute;
-  z-index: 1;
-  top: 2px;
-  left: 2px;
-  width: 58px;
-  height: 22px;
-  background: #65bd63;
-  border-radius: 3px;
-  background-image: -webkit-linear-gradient(top, #9dd993, #65bd63);
-  background-image: -moz-linear-gradient(top, #9dd993, #65bd63);
-  background-image: -o-linear-gradient(top, #9dd993, #65bd63);
-  background-image: linear-gradient(to bottom, #9dd993, #65bd63);
-  -webkit-box-shadow: inset 0 1px rgba(255, 255, 255, 0.5), 0 0 2px rgba(0, 0, 0, 0.2);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.5), 0 0 2px rgba(0, 0, 0, 0.2);
-  -webkit-transition: left 0.15s ease-out;
-  -moz-transition: left 0.15s ease-out;
-  -o-transition: left 0.15s ease-out;
-  transition: left 0.15s ease-out;
-}
-
 
 #map-panel{
 	margin: 0 32px 24px;
@@ -221,6 +213,25 @@ width: 100%;
 .mapicons:focus-visible {
 	outline: 2px solid #ec7721;
 	outline-offset: 2px;
+}
+
+.route-arrow-icon {
+	background: transparent;
+	border: 0;
+}
+
+.route-arrow-head {
+	display: block;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 0;
+	height: 0;
+	border-top: 5px solid transparent;
+	border-bottom: 5px solid transparent;
+	border-left: 12px solid #111;
+	filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.7));
+	transform-origin: 50% 50%;
 }
 
 #locationPanelWrapper{
@@ -456,48 +467,6 @@ font-size: 12px;
 }
 
 
-#map-top-panel{
-	position: absolute;
-	top: 20px;
-    font-style: italic;
-    z-index: 10;
-    margin-top: 40px;
-
-}
-
-
-.Tab1 {
-	width:120px;
-	height:30px;
-	float: left;
-	background-color: #383838;
-	position:relative;
-	cursor: pointer;
-	opacity: 0.8;
-	font-family: 'Gotham-BookItalic';
-	opacity:0.8;
-  	filter:alpha(opacity=60); /* For IE8 and earlier */
-}
-
-.Tab1.active1 {
-	
-	background-color:#d24a46;
-	opacity: 1;
-}
-
-.Tab1Text {
-	
-	color: #a09f9f;
-	font-family: 'Gotham-BookItalic';
-	text-align: center;
-	line-height: 26px;
-}
-
-.active1 .Tab1Text {
-	
-	color: #FFFFFF;
-}
-
 @media (max-width: 900px) {
   div#infoback {
     width: 100%;
@@ -505,7 +474,13 @@ font-size: 12px;
   }
 
   div#info {
-    margin: 120px 24px 16px;
+    margin: 0 24px 16px;
+  }
+
+  #sidebar-header,
+  #dataset-panel {
+    margin-left: 24px;
+    margin-right: 24px;
   }
 
   .status-message {
@@ -514,14 +489,6 @@ font-size: 12px;
 
   #search-panel {
     margin: 0 24px 16px;
-  }
-
-  #collapse {
-    right: 12px;
-  }
-
-  #map-top-panel {
-    margin-top: 20px;
   }
 
   #map-panel {

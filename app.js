@@ -10,14 +10,16 @@ $(document).ready(function () {
   var isSmallScreen = window.matchMedia("(max-width: 900px)").matches;
   $info.css("width", isSmallScreen ? "100%" : "320px");
   $info.show();
-  $("#sidebar-on").prop("checked", true);
+  $("#sidebar-open").hide();
 
-  $("#sidebar-off").on("click", function () {
+  $("#sidebar-close").on("click", function () {
     $info.hide("slow");
+    $("#sidebar-open").show("slow");
   });
 
-  $("#sidebar-on").on("click", function () {
+  $("#sidebar-open").on("click", function () {
     $info.show("slow");
+    $("#sidebar-open").hide("slow");
   });
 
   $("#districtLevel, #individualPlot").on("keydown", function (event) {
@@ -105,9 +107,11 @@ $(document).ready(function () {
 
   function setRegionTab(region) {
     if (region === "sea") {
-      $("#individualPlot").addClass("active1").siblings().removeClass("active1");
+      $("#individualPlot").addClass("active1");
+      $("#districtLevel").removeClass("active1");
     } else if (region === "mexico") {
-      $("#districtLevel").addClass("active1").siblings().removeClass("active1");
+      $("#districtLevel").addClass("active1");
+      $("#individualPlot").removeClass("active1");
     }
   }
 
