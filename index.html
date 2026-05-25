@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-  <link rel="stylesheet" href="styles.css?v=route-arrows-2" />
+  <link rel="stylesheet" href="styles.css?v=story-timeline-1" />
 </head>
 <body>
   <div id="map"></div>
@@ -38,23 +38,23 @@
     </div>
     <div id='info'>
     <p>
-      Follow Rene & Rebecca on our adventures through Mexico and Southeast Asia, and view our whereabouts as we "Walk the World!!" 
-    </p>
-    <p>
-      The points on this map represent locations where we have geotagged with a comment and photo. The points you see now are the places we visited on our South East Aisa trip in January 2014. 
-    </p>
-    <p>
-      Click on Mexico to see our trip back in December 2013!! 
-    </p>
-    <p>
-      Point clustering are represented as green dots with the count of points. Click on clusters to zoom in and enable to view individual points (red dots). Clicking on individual points will allow you to view the comment and photo associated with the geolocation.   
-    </p>
-    <p>
-      ENJOY!!! 
+      Follow Rene & Rebecca through Mexico and Southeast Asia. Pick a stop from the timeline to move through the route, open photos, and explore the trip in order.
     </p>
     <p class="disclaimer">
       
     </p></div>
+    <div id="timeline-panel">
+      <div class="panel-heading-row">
+        <h2>Trip Timeline</h2>
+        <button id="fit-trip" class="panel-action" type="button">Fit trip</button>
+      </div>
+      <div id="timeline-controls" class="timeline-controls" aria-label="Timeline controls">
+        <button id="timeline-prev" type="button">Previous</button>
+        <button id="timeline-next" type="button">Next</button>
+      </div>
+      <p id="timeline-count" class="timeline-count">Loading stops...</p>
+      <div id="timeline-list" role="list" aria-label="Trip timeline"></div>
+    </div>
     <div id="search-panel">
       <h2>Search Trips</h2>
       <input id="search-comment" type="text" placeholder="Search comments..." aria-label="Search comments" />
@@ -95,7 +95,7 @@
   <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-  <script src="Map.js?v=route-arrows-2" type="text/javascript"></script>
-  <script src="app.js?v=route-arrows-2" type="text/javascript"></script>
+  <script src="Map.js?v=story-timeline-1" type="text/javascript"></script>
+  <script src="app.js?v=story-timeline-1" type="text/javascript"></script>
 </body>
 </html>

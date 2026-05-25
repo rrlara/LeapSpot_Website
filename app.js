@@ -3,6 +3,7 @@ $(document).ready(function () {
   var pendingSelectedMarker = null;
   var initialUrlState = readUrlState();
   var imageViewerOpenedAt = 0;
+  var currentTimelinePoints = [];
 
   init();
 
@@ -44,6 +45,13 @@ $(document).ready(function () {
 
   $("#search-comment, #filter-from, #filter-to").on("input", renderSearchResults);
   $("#filter-region").on("change", renderSearchResults);
+  $("#timeline-prev").on("click", function () {
+    focusRelativeTimelinePoint(-1);
+  });
+  $("#timeline-next").on("click", function () {
+    focusRelativeTimelinePoint(1);
+  });
+  $("#fit-trip").on("click", fitCurrentTrip);
   bindPopupImageActivation();
   $(document).on("click touchend", ".popup-image-link", function (event) {
     event.preventDefault();
@@ -71,6 +79,7 @@ $(document).ready(function () {
 
   window.addEventListener("travel:regionloaded", function (event) {
     renderSearchResults();
+    renderTimeline();
     tryApplyPendingSelected(event.detail && event.detail.region);
   });
 
@@ -78,11 +87,14 @@ $(document).ready(function () {
     var region = event.detail && event.detail.region;
     if (region) {
       setRegionTab(region);
+      renderTimeline(region);
     }
+    setActiveTimelineItem(event.detail && event.detail.markerId);
     updateUrlState();
   });
 
   window.addEventListener("travel:statechange", function () {
+    renderTimeline();
     if (!isApplyingUrlState) {
       updateUrlState();
     }
@@ -200,6 +212,7 @@ $(document).ready(function () {
     }
     isApplyingUrlState = false;
     renderSearchResults();
+    renderTimeline();
     updateUrlState();
   }
 
@@ -235,6 +248,166 @@ $(document).ready(function () {
 
     var nextUrl = window.location.pathname + "?" + params.toString();
     window.history.replaceState({}, "", nextUrl);
+  }
+
+  function getCurrentRegion() {
+    return (_SPDEV.State && _SPDEV.State.currentRegion) || "sea";
+  }
+
+  function getTimelinePoints(region) {
+    if (!_SPDEV.State || !_SPDEV.State.pointsByRegion) {
+      return [];
+    }
+
+    var points = (_SPDEV.State.pointsByRegion[region] || []).slice();
+    points.sort(function (pointA, pointB) {
+      var dateA = pointA.dateValue === null ? Number.MAX_SAFE_INTEGER : pointA.dateValue;
+      var dateB = pointB.dateValue === null ? Number.MAX_SAFE_INTEGER : pointB.dateValue;
+      if (dateA !== dateB) {
+        return dateA - dateB;
+      }
+      return String(pointA.timestamp || "").localeCompare(String(pointB.timestamp || ""));
+    });
+    return points;
+  }
+
+  function renderTimeline(regionOverride) {
+    if (!_SPDEV.State) {
+      return;
+    }
+
+    var region = regionOverride || getCurrentRegion();
+    currentTimelinePoints = getTimelinePoints(region);
+    var regionLabel = region === "sea" ? "Southeast Asia" : "Mexico";
+    $("#timeline-count").text(currentTimelinePoints.length ? currentTimelinePoints.length + " stops in " + regionLabel : "No stops loaded yet");
+    $("#timeline-prev, #timeline-next, #fit-trip").prop("disabled", currentTimelinePoints.length === 0);
+
+    var html = currentTimelinePoints.map(function (point, index) {
+      return buildTimelineItem(point, index);
+    }).join("");
+    $("#timeline-list").html(html || '<div class="timeline-empty">Stops will appear after the trip loads.</div>');
+
+    $("#timeline-list .timeline-item").on("click", onTimelineSelect);
+    $("#timeline-list .timeline-item").on("keydown", function (event) {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        $(this).trigger("click");
+      }
+    });
+
+    setActiveTimelineItem(_SPDEV.State.selectedMarkerId);
+  }
+
+  function buildTimelineItem(point, index) {
+    var safeComment = escapeHtml(point.comment || "(No comment)");
+    var safeDate = escapeHtml(formatTimelineDate(point.timestamp));
+    var safeMarkerId = escapeHtmlAttribute(point.id);
+    var thumbnail = buildTimelineThumbnail(point);
+
+    return (
+      '<div class="timeline-item" role="button" tabindex="0" data-marker-id="' + safeMarkerId + '">' +
+        '<div class="timeline-index">' + (index + 1) + "</div>" +
+        '<div class="timeline-body">' +
+          '<div class="timeline-date">' + safeDate + "</div>" +
+          '<div class="timeline-comment">' + safeComment + "</div>" +
+        "</div>" +
+        thumbnail +
+      "</div>"
+    );
+  }
+
+  function buildTimelineThumbnail(point) {
+    if (typeof getImageCandidates !== "function") {
+      return "";
+    }
+
+    var feature = {
+      properties: {
+        timestamp: point.timestamp
+      }
+    };
+    var candidates = getImageCandidates(feature);
+    if (!candidates.length) {
+      return "";
+    }
+
+    return '<img class="timeline-thumb" loading="lazy" alt="" src="' + escapeHtmlAttribute(candidates[0]) +
+      '" data-candidates="' + escapeHtmlAttribute(candidates.join("|")) +
+      '" data-candidate-index="0" onerror="handleImageError(this)" />';
+  }
+
+  function formatTimelineDate(timestamp) {
+    if (!timestamp) {
+      return "Unknown date";
+    }
+    var parsed = Date.parse(timestamp);
+    if (isNaN(parsed)) {
+      return timestamp;
+    }
+    return new Date(parsed).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+  }
+
+  function onTimelineSelect() {
+    var markerId = $(this).data("markerId");
+    if (_SPDEV.Search && markerId) {
+      _SPDEV.Search.focusMarkerById(markerId);
+      updateUrlState();
+    }
+  }
+
+  function focusRelativeTimelinePoint(direction) {
+    if (!currentTimelinePoints.length || !_SPDEV.Search) {
+      return;
+    }
+
+    var selectedId = _SPDEV.State && _SPDEV.State.selectedMarkerId;
+    var selectedIndex = -1;
+    for (var index = 0; index < currentTimelinePoints.length; index++) {
+      if (currentTimelinePoints[index].id === selectedId) {
+        selectedIndex = index;
+        break;
+      }
+    }
+
+    var nextIndex = selectedIndex === -1 ? 0 : selectedIndex + direction;
+    if (nextIndex < 0) {
+      nextIndex = currentTimelinePoints.length - 1;
+    } else if (nextIndex >= currentTimelinePoints.length) {
+      nextIndex = 0;
+    }
+    _SPDEV.Search.focusMarkerById(currentTimelinePoints[nextIndex].id);
+  }
+
+  function fitCurrentTrip() {
+    if (!_SPDEV.Map || !_SPDEV.Map.map || typeof L === "undefined") {
+      return;
+    }
+
+    var bounds = L.latLngBounds([]);
+    for (var index = 0; index < currentTimelinePoints.length; index++) {
+      bounds.extend([currentTimelinePoints[index].lat, currentTimelinePoints[index].lng]);
+    }
+
+    if (bounds.isValid()) {
+      _SPDEV.Map.map.fitBounds(bounds, { padding: [28, 28] });
+    }
+  }
+
+  function setActiveTimelineItem(markerId) {
+    $("#timeline-list .timeline-item").removeClass("is-active").attr("aria-current", "false");
+    if (!markerId) {
+      return;
+    }
+
+    var $activeItem = $('#timeline-list .timeline-item[data-marker-id="' + escapeSelectorValue(markerId) + '"]');
+    $activeItem.addClass("is-active").attr("aria-current", "true");
+    if ($activeItem.length && typeof $activeItem[0].scrollIntoView === "function") {
+      $activeItem[0].scrollIntoView({ block: "nearest" });
+    }
   }
 
   function openImageViewer(imageUrl) {
@@ -308,5 +481,16 @@ $(document).ready(function () {
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
+  }
+
+  function escapeHtmlAttribute(value) {
+    return escapeHtml(value);
+  }
+
+  function escapeSelectorValue(value) {
+    if (window.CSS && typeof window.CSS.escape === "function") {
+      return window.CSS.escape(String(value));
+    }
+    return String(value).replace(/"/g, '\\"');
   }
 });
