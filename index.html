@@ -12,12 +12,12 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-  <link rel="stylesheet" href="styles.css?v=story-timeline-1" />
+  <link rel="stylesheet" href="styles.css?v=drawer-usability-2" />
 </head>
 <body>
   <div id="map"></div>
-  <button id="sidebar-open" type="button" aria-controls="infoback" aria-label="Open trip controls">Trips</button>
-  <div id='infoback'>
+  <button id="sidebar-open" type="button" aria-controls="infoback" aria-label="Open trip controls" hidden>Trips</button>
+  <div id='infoback' class="is-open" aria-hidden="false">
     <div id="sidebar-header">
       <div>
         <p class="sidebar-kicker">Journey Map</p>
@@ -58,22 +58,6 @@
     <div id="search-panel">
       <h2>Search Trips</h2>
       <input id="search-comment" type="text" placeholder="Search comments..." aria-label="Search comments" />
-      <div class="search-row">
-        <label for="filter-region">Region</label>
-        <select id="filter-region" aria-label="Filter by region">
-          <option value="all">All</option>
-          <option value="sea">Southeast Asia</option>
-          <option value="mexico">Mexico</option>
-        </select>
-      </div>
-      <div class="search-row">
-        <label for="filter-from">From</label>
-        <input id="filter-from" type="date" aria-label="From date" />
-      </div>
-      <div class="search-row">
-        <label for="filter-to">To</label>
-        <input id="filter-to" type="date" aria-label="To date" />
-      </div>
       <p id="search-count">0 results</p>
       <div id="search-results" role="list" aria-label="Search results"></div>
     </div>
@@ -95,7 +79,7 @@
   <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-  <script src="Map.js?v=story-timeline-1" type="text/javascript"></script>
-  <script src="app.js?v=story-timeline-1" type="text/javascript"></script>
+  <script src="Map.js?v=drawer-usability-2" type="text/javascript"></script>
+  <script src="app.js?v=drawer-usability-2" type="text/javascript"></script>
 </body>
 </html>

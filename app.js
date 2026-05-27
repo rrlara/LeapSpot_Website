@@ -8,19 +8,15 @@ $(document).ready(function () {
   init();
 
   var $info = $("#infoback");
-  var isSmallScreen = window.matchMedia("(max-width: 900px)").matches;
-  $info.css("width", isSmallScreen ? "100%" : "320px");
-  $info.show();
-  $("#sidebar-open").hide();
+  var smallScreenQuery = window.matchMedia("(max-width: 900px)");
+  openDrawer();
 
   $("#sidebar-close").on("click", function () {
-    $info.hide("slow");
-    $("#sidebar-open").show("slow");
+    closeDrawer();
   });
 
   $("#sidebar-open").on("click", function () {
-    $info.show("slow");
-    $("#sidebar-open").hide("slow");
+    openDrawer();
   });
 
   $("#districtLevel, #individualPlot").on("keydown", function (event) {
@@ -43,8 +39,7 @@ $(document).ready(function () {
     }
   });
 
-  $("#search-comment, #filter-from, #filter-to").on("input", renderSearchResults);
-  $("#filter-region").on("change", renderSearchResults);
+  $("#search-comment").on("input", renderSearchResults);
   $("#timeline-prev").on("click", function () {
     focusRelativeTimelinePoint(-1);
   });
@@ -127,12 +122,37 @@ $(document).ready(function () {
     }
   }
 
+  function openDrawer() {
+    $info.addClass("is-open").attr("aria-hidden", "false");
+    $("#sidebar-open").prop("hidden", true);
+    refreshMapSizeAfterDrawerChange();
+  }
+
+  function closeDrawer() {
+    $info.removeClass("is-open").attr("aria-hidden", "true");
+    $("#sidebar-open").prop("hidden", false);
+    refreshMapSizeAfterDrawerChange();
+  }
+
+  function closeDrawerAfterSelection() {
+    if (smallScreenQuery.matches) {
+      closeDrawer();
+    }
+  }
+
+  function refreshMapSizeAfterDrawerChange() {
+    if (!_SPDEV.Map || !_SPDEV.Map.map || typeof _SPDEV.Map.map.invalidateSize !== "function") {
+      return;
+    }
+    _SPDEV.Map.map.invalidateSize();
+    window.setTimeout(function () {
+      _SPDEV.Map.map.invalidateSize();
+    }, 220);
+  }
+
   function getSearchFilters() {
     return {
-      query: $("#search-comment").val(),
-      region: $("#filter-region").val(),
-      fromDate: $("#filter-from").val(),
-      toDate: $("#filter-to").val()
+      query: $("#search-comment").val()
     };
   }
 
@@ -171,6 +191,7 @@ $(document).ready(function () {
     if (_SPDEV.Search && markerId) {
       _SPDEV.Search.focusMarkerById(markerId);
       updateUrlState();
+      closeDrawerAfterSelection();
     }
   }
 
@@ -356,6 +377,7 @@ $(document).ready(function () {
     if (_SPDEV.Search && markerId) {
       _SPDEV.Search.focusMarkerById(markerId);
       updateUrlState();
+      closeDrawerAfterSelection();
     }
   }
 
