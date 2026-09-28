@@ -19,7 +19,7 @@
       rel="stylesheet"
       href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
     />
-    <link rel="stylesheet" href="styles.css?v=astra-1" />
+    <link rel="stylesheet" href="styles.css?v=astra-2" />
   </head>
   <body>
     <header class="app-header">
@@ -29,6 +29,13 @@
         ></a
       >
       <span class="header-note">A little further. A little closer.</span>
+      <nav class="focus-switch" aria-label="Workspace view">
+        <button data-view="split" class="active" aria-pressed="true">
+          Split view
+        </button>
+        <button data-view="map" aria-pressed="false">Map focus</button>
+        <button data-view="journal" aria-pressed="false">Moments focus</button>
+      </nav>
       <div class="travelers">
         <span class="avatar">R<span>R</span></span
         ><span>Rene & Rebecca<small>OUR TRAVEL JOURNAL</small></span>
@@ -36,42 +43,73 @@
     </header>
     <main class="workspace">
       <aside class="journal" aria-label="Travel journal">
-        <div class="journal-intro">
-          <div class="eyebrow">THE GOOD KIND OF LOST</div>
-          <h1>Places we’ve been.<br />Stories we keep.</h1>
-          <p>Two people. A world of little moments.</p>
-        </div>
-        <div class="trip-tabs" role="group" aria-label="Choose a trip">
-          <button class="trip-tab active" data-region="sea" aria-pressed="true">
-            Southeast Asia <span>↗</span>
-          </button>
-          <button class="trip-tab" data-region="mexico" aria-pressed="false">
-            Mexico <span>↗</span>
-          </button>
-        </div>
-        <section class="trip-cover" aria-label="Trip overview">
-          <img id="cover-image" alt="" />
-          <div class="cover-shade"></div>
-          <div class="cover-copy">
-            <span id="trip-dates" class="cover-date">LOADING JOURNEY</span>
-            <h2 id="trip-title">Southeast Asia</h2>
-            <p id="trip-description">
-              A new year. A different corner of the world.
-            </p>
+        <div class="journal-overview">
+          <div class="journal-intro">
+            <div class="eyebrow">THE GOOD KIND OF LOST</div>
+            <h1>Places we’ve been.<br />Stories we keep.</h1>
+            <p>Two people. A world of little moments.</p>
           </div>
-          <span class="cover-label"
-            >FIELD NOTES / <span id="trip-number">01</span></span
-          >
-        </section>
-        <div class="trip-stats">
-          <div><strong id="stat-stops">—</strong><span>moments</span></div>
-          <div>
-            <strong id="stat-days">—</strong><span>days on the road</span>
+          <div class="trip-tabs" role="group" aria-label="Choose a trip">
+            <button
+              class="trip-tab active"
+              data-region="sea"
+              aria-pressed="true"
+            >
+              Southeast Asia <span>↗</span>
+            </button>
+            <button class="trip-tab" data-region="mexico" aria-pressed="false">
+              Mexico <span>↗</span>
+            </button>
           </div>
-          <button id="fit-trip" type="button">
-            Explore route <span>↗</span>
-          </button>
+          <section class="trip-cover" aria-label="Trip overview">
+            <img id="cover-image" alt="" />
+            <img id="cover-image-next" alt="" aria-hidden="true" />
+            <button
+              id="cover-open"
+              class="cover-open"
+              aria-label="Explore this cover memory"
+              disabled
+            ></button>
+            <div class="cover-shade"></div>
+            <div class="cover-copy">
+              <span id="trip-dates" class="cover-date">LOADING JOURNEY</span>
+              <h2 id="trip-title">Southeast Asia</h2>
+              <p id="trip-description">
+                A new year. A different corner of the world.
+              </p>
+            </div>
+            <span class="cover-label"
+              >FIELD NOTES / <span id="trip-number">01</span></span
+            >
+            <div
+              class="cover-controls"
+              role="group"
+              aria-label="Trip photo slideshow"
+            >
+              <button id="cover-prev" aria-label="Previous cover photo">
+                ←
+              </button>
+              <button
+                id="cover-pause"
+                aria-label="Pause cover slideshow"
+                aria-pressed="false"
+              >
+                Ⅱ
+              </button>
+              <button id="cover-next" aria-label="Next cover photo">→</button>
+            </div>
+          </section>
+          <div class="trip-stats">
+            <div><strong id="stat-stops">—</strong><span>moments</span></div>
+            <div>
+              <strong id="stat-days">—</strong><span>days on the road</span>
+            </div>
+            <button id="fit-trip" type="button">
+              Explore route <span>↗</span>
+            </button>
+          </div>
         </div>
+        <div id="journal-detail" aria-label="Selected journal memory"></div>
         <section class="timeline-section" aria-labelledby="timeline-heading">
           <div class="section-heading">
             <h2 id="timeline-heading">The journey</h2>
@@ -133,7 +171,7 @@
             <span class="swatch terrain"></span>Terrain
           </button>
         </div>
-        <div class="route-legend"><span></span> The path we took</div>
+        <div class="route-legend"><span>→</span> Earlier → later</div>
         <article
           id="moment-card"
           class="moment-card"
@@ -185,7 +223,7 @@
       crossorigin=""
     ></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-    <script src="Map.js?v=astra-1"></script>
-    <script src="app.js?v=astra-1"></script>
+    <script src="Map.js?v=astra-2"></script>
+    <script src="app.js?v=astra-2"></script>
   </body>
 </html>

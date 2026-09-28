@@ -1048,3 +1048,269 @@ dialog p {
 .day-heading {
   pointer-events: none;
 }
+/* Optional focus views preserve the split layout as the initial experience. */
+.focus-switch {
+  display: flex;
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.focus-switch button {
+  border: 0;
+  background: transparent;
+  padding: 9px 12px;
+  border-radius: 7px;
+  font-size: 11px;
+  white-space: nowrap;
+  color: var(--muted);
+}
+.focus-switch button.active {
+  background: var(--soft);
+  color: var(--accent);
+}
+.travelers {
+  margin-left: 0;
+}
+.journal-overview {
+  flex-shrink: 0;
+}
+#journal-detail {
+  display: none;
+}
+.trip-cover > img {
+  opacity: 0;
+  transition: opacity 0.65s ease;
+}
+.trip-cover > img.is-current {
+  opacity: 1;
+}
+.cover-open {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  z-index: 2;
+  border-radius: 12px;
+}
+.cover-open:focus-visible {
+  outline-offset: -4px;
+}
+.cover-copy,
+.cover-label,
+.cover-shade {
+  pointer-events: none;
+  z-index: 1;
+}
+.cover-controls {
+  position: absolute;
+  right: 10px;
+  top: 9px;
+  display: flex;
+  gap: 3px;
+  z-index: 3;
+  padding: 3px;
+  border-radius: 7px;
+  background: #171d30a6;
+  backdrop-filter: blur(10px);
+}
+.cover-controls button {
+  border: 0;
+  background: transparent;
+  color: white;
+  border-radius: 4px;
+  min-width: 28px;
+  min-height: 28px;
+  font-size: 12px;
+  padding: 4px;
+}
+.cover-controls button:hover {
+  background: #ffffff30;
+}
+.cover-controls button:focus-visible {
+  outline-color: white;
+}
+.route-direction {
+  background: none;
+  border: 0;
+  pointer-events: none !important;
+}
+.route-direction span {
+  display: block;
+  font-size: 16px;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+  text-align: center;
+  color: #6254bd;
+  text-shadow:
+    0 1px 2px white,
+    0 -1px 2px white;
+  transform-origin: center;
+}
+.route-legend span {
+  background: transparent;
+  width: 22px;
+  height: auto;
+  color: var(--accent);
+  font-size: 20px;
+  line-height: 10px;
+}
+@media (min-width: 761px) {
+  body[data-view="map"] .workspace {
+    grid-template-columns: minmax(0, 1fr);
+    padding-left: 20px;
+  }
+  body[data-view="map"] .journal {
+    display: none;
+  }
+  body[data-view="journal"] .workspace {
+    grid-template-columns: minmax(0, 1fr);
+    padding-left: 20px;
+  }
+  body[data-view="journal"] .map-stage {
+    display: none;
+  }
+  body[data-view="journal"] .journal {
+    display: grid;
+    grid-template-columns: minmax(250px, 340px) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: 0 40px;
+    padding: 8px 20px 8px;
+    max-width: 1440px;
+    width: 100%;
+    margin: auto;
+    height: 100%;
+  }
+  body[data-view="journal"] .journal-overview {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  body[data-view="journal"] .timeline-section {
+    grid-column: 2;
+    grid-row: 1/4;
+    padding: 0 0 0 30px;
+    border-left: 1px solid var(--line);
+  }
+  body[data-view="journal"] .section-heading h2 {
+    font:
+      600 24px "Manrope",
+      sans-serif;
+  }
+  body[data-view="journal"] .section-heading {
+    margin-bottom: 20px;
+  }
+  body[data-view="journal"] .search-field {
+    padding: 14px;
+  }
+  body[data-view="journal"] .search-field input {
+    font-size: 13px;
+  }
+  body[data-view="journal"] .timeline-item {
+    padding: 14px 10px;
+    gap: 18px;
+    min-height: 110px;
+  }
+  body[data-view="journal"] .timeline-comment {
+    font-size: 15px;
+    -webkit-line-clamp: 3;
+  }
+  body[data-view="journal"] .timeline-time {
+    font-size: 11px;
+    margin-top: 8px;
+  }
+  body[data-view="journal"] .timeline-thumb {
+    width: 100px;
+    height: 80px;
+  }
+  body[data-view="journal"] .timeline-dot {
+    width: 26px;
+    height: 26px;
+    font-size: 10px;
+  }
+  body[data-view="journal"] .timeline-item:after {
+    left: 23px;
+    top: 52px;
+    bottom: -50px;
+  }
+  body[data-view="journal"] .day-heading {
+    padding-top: 18px;
+    padding-bottom: 14px;
+    font-size: 10px;
+  }
+  body[data-view="journal"] #journal-detail {
+    display: block;
+    grid-column: 1;
+    grid-row: 2;
+    overflow: auto;
+    padding-top: 16px;
+    min-height: 0;
+  }
+  body[data-view="journal"] #moment-card {
+    position: relative;
+    inset: auto;
+    margin: 0;
+    max-width: none;
+    width: 100%;
+    box-shadow: none;
+    gap: 10px;
+  }
+  body[data-view="journal"] .moment-photo {
+    width: 95px;
+    min-height: 150px;
+  }
+  body[data-view="journal"] .journal-footer {
+    grid-column: 1;
+    grid-row: 3;
+  }
+}
+@media (min-width: 761px) and (max-width: 1100px) {
+  .header-note {
+    display: none;
+  }
+  .app-header {
+    padding: 0 20px;
+    gap: 18px;
+  }
+  body[data-view="journal"] .journal {
+    grid-template-columns: 270px minmax(0, 1fr);
+    gap: 0 18px;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  body[data-view="journal"] .timeline-section {
+    padding-left: 18px;
+  }
+  body[data-view="journal"] .timeline-thumb {
+    width: 65px;
+    height: 65px;
+  }
+  body[data-view="journal"] .timeline-comment {
+    font-size: 13px;
+  }
+}
+@media (max-width: 760px) {
+  .focus-switch {
+    display: none;
+  }
+  .travelers {
+    margin-left: auto;
+  }
+  .cover-controls button {
+    min-width: 34px;
+    min-height: 34px;
+  }
+  .cover-label {
+    top: 20px;
+  }
+}
+@media (min-width: 761px) {
+  body[data-view="journal"] #status {
+    position: relative;
+    inset: auto;
+    margin-top: 12px;
+  }
+}

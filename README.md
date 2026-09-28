@@ -10,12 +10,21 @@ python3 -m http.server 8765
 
 Open http://localhost:8765. Desktop pairs a scrollable journal with the map; phones switch between the map and journal using the bottom navigation. Select a moment to view its photo story, use previous/next to follow the journey, or select Explore route to see all stops, including departure and return. The initial map frames the destination region. Press `/` to search and Escape to dismiss a photo or memory. The address bar preserves the trip, map style, position, and selected memory.
 
+## Interactive views
+
+The default split layout is unchanged. Use **Map focus** for a full-width map or **Moments focus** for a larger timeline and an inline memory card. Selecting a memory in moments focus keeps that view open. **Split view** restores both panels; Escape also restores it when no memory or photo is open. Phone layouts retain the map/journal bottom navigation.
+
+Dotted routes follow timestamp order, with arrows pointing from earlier to later moments. Arrow placement adapts to the visible map and zoom; tiny/overlapping segments are suppressed for clarity. As before, date-line crossings are not drawn across the whole world.
+
+Each trip cover cycles through a selection of its own photos every five seconds with a crossfade. Previous, next, and pause/play controls are available, and clicking the cover opens its matching memory. Rotation pauses while hovering, using its controls, viewing a full-screen photo, or hiding the journal/browser tab. Reduced-motion settings disable autoplay by default. Failed images are skipped while retaining the last successful cover.
+
 ## Browser checks
 
 Install Playwright in your development environment, then run against the local server:
 
 ```sh
 node tests/browser.cjs
+node tests/interactive.cjs
 ```
 
 Use `NODE_PATH` if Playwright is installed outside this project, and `TEST_URL` to test another server. The checks cover trip switching, chronological selection, search, image dialogs, shared URLs, all map styles, desktop/tablet/phone layouts, out-of-order requests, and failed-load retry. Screenshots are written to `/tmp/astra-*.png`.

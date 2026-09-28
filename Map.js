@@ -31,6 +31,69 @@ window.TravelMap = (() => {
     points = [],
     selected;
   const markers = new Map();
+  const arrows = L.layerGroup().addTo(map);
+  // Clip projected segments to the viewport before placing direction indicators.
+  function clipSegment(a, b, width, height) {
+    const dx = b.x - a.x,
+      dy = b.y - a.y;
+    let lo = 0,
+      hi = 1;
+    for (const [p, q] of [
+      [-dx, a.x],
+      [dx, width - a.x],
+      [-dy, a.y],
+      [dy, height - a.y],
+    ]) {
+      if (p === 0) {
+        if (q < 0) return null;
+        continue;
+      }
+      const t = q / p;
+      if (p < 0) lo = Math.max(lo, t);
+      else hi = Math.min(hi, t);
+      if (lo > hi) return null;
+    }
+    return [
+      L.point(a.x + lo * dx, a.y + lo * dy),
+      L.point(a.x + hi * dx, a.y + hi * dy),
+    ];
+  }
+  function renderArrows() {
+    arrows.clearLayers();
+    const size = map.getSize(),
+      occupied = [];
+    for (let i = 1; i < points.length; i++) {
+      const previous = points[i - 1],
+        next = points[i];
+      if (Math.abs(previous.lng - next.lng) > 180) continue;
+      const a = map.latLngToContainerPoint([previous.lat, previous.lng]);
+      const b = map.latLngToContainerPoint([next.lat, next.lng]);
+      const segment = clipSegment(a, b, size.x, size.y);
+      if (!segment || segment[0].distanceTo(segment[1]) < 28) continue;
+      const middle = segment[0].add(segment[1]).divideBy(2);
+      if (occupied.some((p) => p.distanceTo(middle) < 44)) continue;
+      occupied.push(middle);
+      const angle = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
+      L.marker(map.containerPointToLatLng(middle), {
+        interactive: false,
+        keyboard: false,
+        icon: L.divIcon({
+          className: "route-direction",
+          iconSize: [18, 18],
+          iconAnchor: [9, 9],
+          html:
+            '<span aria-hidden="true" data-from="' +
+            previous.id +
+            '" data-to="' +
+            next.id +
+            '" style="transform:rotate(' +
+            angle +
+            'deg)">➤</span>',
+        }),
+      }).addTo(arrows);
+    }
+  }
+  map.on("moveend zoomend resize", renderArrows);
   const normalStyle = {
     radius: 6,
     color: "#ffffff",
@@ -50,6 +113,7 @@ window.TravelMap = (() => {
     if (cluster) map.removeLayer(cluster);
     if (route) map.removeLayer(route);
     markers.clear();
+    arrows.clearLayers();
     points = [];
     selected = null;
   }
@@ -59,6 +123,7 @@ window.TravelMap = (() => {
     markers.clear();
     selected = null;
     points = nextPoints;
+    arrows.clearLayers();
     cluster = L.markerClusterGroup({
       showCoverageOnHover: false,
       maxClusterRadius: 32,
@@ -73,7 +138,12 @@ window.TravelMap = (() => {
     points.forEach((point) => {
       const marker = L.circleMarker([point.lat, point.lng], normalStyle);
       const tip = document.createElement("span");
-      tip.textContent = point.comment || "A moment along the way";
+      tip.textContent =
+        (point.index === 0
+          ? "Start · "
+          : point.index === points.length - 1
+            ? "Finish · "
+            : "") + (point.comment || "A moment along the way");
       marker.bindTooltip(tip, { direction: "top", offset: [0, -8] });
       marker.on("click", () => onSelect(point.id));
       markers.set(point.id, marker);
@@ -105,6 +175,7 @@ window.TravelMap = (() => {
         maxZoom: 12,
       });
     else fit();
+    renderArrows();
   }
   function focus(id, move = true) {
     if (selected && markers.has(selected))

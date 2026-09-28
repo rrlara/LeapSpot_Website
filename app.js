@@ -22,6 +22,156 @@
     selected = null,
     loadVersion = 0,
     imageReturnFocus;
+  const mobileQuery = window.matchMedia("(max-width: 760px)");
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  let focusView = "split",
+    heroDeck = [],
+    heroIndex = -1,
+    heroPoint = null;
+  let heroTimer,
+    heroCancel,
+    heroRequest = 0,
+    heroBusy = false;
+  let heroPaused = reducedMotion.matches;
+  function setFocusView(view) {
+    const center = TravelMap.map.getCenter(),
+      zoom = TravelMap.map.getZoom();
+    focusView = view;
+    document.body.dataset.view = view;
+    document.querySelectorAll("button[data-view]").forEach((button) => {
+      const active = button.dataset.view === view;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", active);
+    });
+    const host =
+      view === "journal"
+        ? $("journal-detail")
+        : document.querySelector(".map-stage");
+    host.appendChild($("moment-card"));
+    host.appendChild($("status"));
+    if (view !== "journal") {
+      TravelMap.map.invalidateSize({ pan: false });
+      TravelMap.map.setView(center, zoom, { animate: false });
+    }
+  }
+  document.querySelectorAll("button[data-view]").forEach((button) => {
+    button.onclick = () => setFocusView(button.dataset.view);
+  });
+  mobileQuery.addEventListener("change", () => setFocusView("split"));
+  function updateHeroPause() {
+    $("cover-pause").textContent = heroPaused ? "▶" : "Ⅱ";
+    $("cover-pause").setAttribute(
+      "aria-label",
+      heroPaused ? "Play cover slideshow" : "Pause cover slideshow",
+    );
+    $("cover-pause").setAttribute("aria-pressed", String(heroPaused));
+  }
+  function stopHero() {
+    clearInterval(heroTimer);
+    if (heroCancel) heroCancel();
+    heroRequest++;
+    heroBusy = false;
+    heroDeck = [];
+    heroPoint = null;
+    heroIndex = -1;
+    $("cover-open").disabled = true;
+    for (const id of ["cover-image", "cover-image-next"]) {
+      $(id).classList.remove("is-current");
+      $(id).hidden = true;
+    }
+    for (const id of ["cover-prev", "cover-next", "cover-pause"])
+      $(id).disabled = true;
+  }
+  function showHero(index, skipped = 0) {
+    if (!heroDeck.length) return;
+    if (heroCancel) heroCancel();
+    const request = ++heroRequest;
+    index = (index + heroDeck.length) % heroDeck.length;
+    const point = heroDeck[index],
+      candidates = getImageCandidates({ properties: point.properties });
+    const image = new Image();
+    let candidate = 0,
+      timeout;
+    heroBusy = true;
+    const cleanup = () => {
+      clearTimeout(timeout);
+      image.onload = null;
+      image.onerror = null;
+    };
+    heroCancel = cleanup;
+    const failed = () => {
+      cleanup();
+      if (request !== heroRequest) return;
+      heroBusy = false;
+      if (skipped < 2) showHero(index + 1, skipped + 1);
+    };
+    image.onload = () => {
+      cleanup();
+      if (request !== heroRequest) return;
+      const front = document.querySelector(".trip-cover img.is-current");
+      const back =
+        front === $("cover-image") ? $("cover-image-next") : $("cover-image");
+      back.src = image.src;
+      back.hidden = false;
+      back.classList.add("is-current");
+      if (front) front.classList.remove("is-current");
+      heroIndex = index;
+      heroPoint = point;
+      heroBusy = false;
+      document.querySelector(".trip-cover").dataset.moment = point.id;
+      $("cover-open").disabled = false;
+      $("cover-open").setAttribute(
+        "aria-label",
+        "Explore memory: " + (point.comment || dayLabel(point.timestamp)),
+      );
+    };
+    image.onerror = () => {
+      if (++candidate < candidates.length) image.src = candidates[candidate];
+      else failed();
+    };
+    timeout = setTimeout(failed, 8000);
+    if (candidates.length) image.src = candidates[0];
+    else failed();
+  }
+  function startHero(cover) {
+    heroDeck = [
+      cover,
+      ...points.filter(
+        (p, index) =>
+          index % Math.max(1, Math.floor(points.length / 10)) === 0 &&
+          p.id !== cover.id,
+      ),
+    ];
+    for (const id of ["cover-prev", "cover-next", "cover-pause"])
+      $(id).disabled = false;
+    showHero(0);
+    heroTimer = setInterval(() => {
+      const coverElement = document.querySelector(".trip-cover");
+      if (
+        !heroPaused &&
+        !heroBusy &&
+        !document.hidden &&
+        !$("photo-viewer").open &&
+        coverElement.getClientRects().length &&
+        !coverElement.matches(":hover, :focus-within")
+      )
+        showHero(heroIndex + 1);
+    }, 5000);
+  }
+  $("cover-prev").onclick = () => showHero(heroIndex - 1);
+  $("cover-next").onclick = () => showHero(heroIndex + 1);
+  $("cover-pause").onclick = () => {
+    heroPaused = !heroPaused;
+    updateHeroPause();
+  };
+  $("cover-open").onclick = () => {
+    if (heroPoint) selectPoint(heroPoint.id);
+  };
+  reducedMotion.addEventListener("change", () => {
+    heroPaused = reducedMotion.matches;
+    updateHeroPause();
+  });
+  updateHeroPause();
   const escape = (value) =>
     String(value).replace(
       /[&<>"']/g,
@@ -152,7 +302,7 @@
       });
     const active = $("timeline-list").querySelector(".active");
     if (active) active.scrollIntoView({ block: "nearest" });
-    mobileView(false);
+    if (focusView !== "journal") mobileView(false);
     TravelMap.focus(id, move);
     updateUrl();
   }
@@ -170,6 +320,7 @@
   }
   async function loadTrip(nextRegion, initial = false) {
     const version = ++loadVersion;
+    stopHero();
     region = nextRegion;
     selected = null;
     points = [];
@@ -211,7 +362,13 @@
             lng: feature.geometry.coordinates[0],
           }))
           .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng))
-          .sort((a, b) => a.timestamp.localeCompare(b.timestamp))
+          .sort((a, b) => {
+            const timeA = Date.parse(a.timestamp),
+              timeB = Date.parse(b.timestamp);
+            return Number.isFinite(timeA) && Number.isFinite(timeB)
+              ? timeA - timeB
+              : a.timestamp.localeCompare(b.timestamp);
+          })
           .map((point, index) => ({ ...point, index }));
       }
       if (version !== loadVersion) return;
@@ -235,7 +392,7 @@
         points.find((p) =>
           p.comment.toLowerCase().includes(trip.cover.toLowerCase()),
         ) || points[Math.floor(points.length / 2)];
-      setImage($("cover-image"), cover);
+      startHero(cover);
       TravelMap.show(points, selectPoint);
       renderTimeline();
       $("fit-trip").disabled = false;
@@ -295,6 +452,7 @@
   $("search").oninput = renderTimeline;
   $("fit-trip").onclick = $("map-fit").onclick = () => {
     closeMoment();
+    if (focusView === "journal") setFocusView("map");
     mobileView(false);
     TravelMap.fit();
   };
@@ -332,15 +490,24 @@
       !$("photo-viewer").open
     ) {
       event.preventDefault();
+      if (focusView === "map") setFocusView("journal");
       mobileView(true);
       $("search").focus();
     }
-    if (event.key === "Escape" && !$("photo-viewer").open) closeMoment();
+    if (event.key === "Escape" && !$("photo-viewer").open) {
+      if (selected) closeMoment();
+      else if (focusView !== "split") {
+        setFocusView("split");
+        document.querySelector('button[data-view="split"]').focus();
+      }
+    }
   });
   TravelMap.map.on("moveend", () => {
     if (points.length) updateUrl();
   });
-  new ResizeObserver(() => TravelMap.map.invalidateSize()).observe($("map"));
+  new ResizeObserver(() => {
+    if ($("map").clientWidth) TravelMap.map.invalidateSize();
+  }).observe($("map"));
   if (params.get("b")) setBasemap(params.get("b"));
   loadTrip(region, true);
 })();
